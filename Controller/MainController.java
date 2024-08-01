@@ -157,7 +157,8 @@ public class MainController {
 				if (login(username, password, "admin")) {
 					System.out.println("You are now logged in as admin.");
 					initiatePatientProfile();
-					break;
+					// After initiating patient profile, return to the main menu
+					continue;
 				}
 			} else if ("2".equals(choice)) {
 				String uuid = userInput("Enter UUID: ");
@@ -176,18 +177,16 @@ public class MainController {
 						String dob = userDetails.length > 6 ? userDetails[6] : "";
 						boolean hiv_positive = userDetails.length > 7 && Boolean.parseBoolean(userDetails[7]);
 						String diagnosis_date = userDetails.length > 8 ? userDetails[8] : "";
-						boolean on_antiretroviral_therapy = userDetails.length > 9
-								&& Boolean.parseBoolean(userDetails[9]);
+						boolean on_antiretroviral_therapy = userDetails.length > 9 && Boolean.parseBoolean(userDetails[9]);
 						String medication_start_date = userDetails.length > 10 ? userDetails[10] : "";
-						int years_without_medication = userDetails.length > 11
-								? safeParseInt(userDetails[11])
-								: 0;
+						int years_without_medication = userDetails.length > 11 ? safeParseInt(userDetails[11]) : 0;
 	
 						Patient patient = new Patient(firstName, lastName, username, age, dob, userDetails[0],
 								userDetails[1], hiv_positive, diagnosis_date, on_antiretroviral_therapy,
 								medication_start_date, years_without_medication);
 						patient = completePatientProfile(patient);
-						return;
+						// After completing patient profile, return to the main menu
+						continue;
 					}
 				}
 				if (!found) {
@@ -198,6 +197,7 @@ public class MainController {
 			}
 		}
 	}
+	
 	
 
 
