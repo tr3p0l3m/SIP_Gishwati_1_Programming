@@ -129,7 +129,7 @@ public class MainController {
 		while (!loggedIn) {
 			String username = userInput("Enter username: ");
 			String enteredPassword = userInput("Enter password: ");
-			if (login(username, enteredPassword)) {
+			if (login(username, enteredPassword,"patient")) {
 				System.out.println("Login successful! Welcome back.");
 				loggedIn = true; // Exit the loop if login is successful
 			} else {
@@ -154,7 +154,7 @@ public class MainController {
 			if ("1".equals(choice)) {
 				String username = userInput("Enter admin username: ");
 				String password = userInput("Enter admin password: ");
-				if (login(username, password)) {
+				if (login(username, password, "admin")) {
 					System.out.println("You are now logged in as admin.");
 					initiatePatientProfile();
 					break;
@@ -168,7 +168,7 @@ public class MainController {
 					if (userDetails.length > 1 && userDetails[1].equals(uuid)) {
 						found = true;
 	
-						// Ensure all fields are validated before use
+						// Initialize patient with data
 						String firstName = userDetails.length > 2 ? userDetails[2] : "";
 						String lastName = userDetails.length > 3 ? userDetails[3] : "";
 						String username = userDetails.length > 4 ? userDetails[4] : "";
@@ -187,7 +187,7 @@ public class MainController {
 								userDetails[1], hiv_positive, diagnosis_date, on_antiretroviral_therapy,
 								medication_start_date, years_without_medication);
 						patient = completePatientProfile(patient);
-						return;  // Exit the method after completing the profile
+						return;
 					}
 				}
 				if (!found) {
@@ -197,9 +197,47 @@ public class MainController {
 				System.out.println("Invalid option. Please choose 1 or 2.");
 			}
 		}
-	
-		// Optionally, include a call to `login()` method if you want to immediately prompt for login after profile completion
 	}
+	
+
+
+
+	public static boolean login(String username, String password, String role) {
+		System.out.println("Please login to continue");
+	
+		String[] userStore = runCommand("cat user-store.txt").split("\n");
+		
+		if ("admin".equalsIgnoreCase(role)) {
+			// Admin login
+			for (String user : userStore) {
+				String[] userCredentials = user.split(",");
+				if (userCredentials.length >= 2 && userCredentials[0].equals(username) && userCredentials[1].equals(password)) {
+					System.out.println("Admin login successful");
+					return true;
+				}
+			}
+			System.out.println("Admin login failed");
+			return false;
+		}
+	
+		if ("patient".equalsIgnoreCase(role)) {
+			// Patient login
+			for (String user : userStore) {
+				String[] userDetails = user.split(",");
+				// Ensure there are enough details for login validation
+				if (userDetails.length >= 8 && userDetails[4].equals(username) && userDetails[7].equals(password)) {
+					System.out.println("Patient login successful");
+					return true;
+				}
+			}
+			System.out.println("Patient login failed");
+			return false;
+		}
+	
+		System.out.println("Invalid role specified");
+		return false;
+	}
+
 	
 	// Helper method to safely parse integers
 	private static int safeParseInt(String value) {
