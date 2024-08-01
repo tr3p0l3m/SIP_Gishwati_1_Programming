@@ -1,6 +1,6 @@
-package utilis;
+package models;
 
 public enum UserRole {
     ADMIN,
-    PATIENT
+    PATIENT;
 }
