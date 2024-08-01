@@ -15,6 +15,8 @@ public class MainController {
 			System.out.println("Welcome to Life Prognosis App! Initializing application...");
 			runCommand("echo 'admin,admin' > user-store.txt");
 			System.out.println("Initialization complete");
+		} else {
+			System.out.println("Welcome to Life Prognosis App!");
 		}
 	}
 
@@ -128,17 +130,98 @@ public class MainController {
 
 	public static void main(String[] args) {
 		checkStorage();
+		// Ask user to Login or Complete Profile
+		String choice = userInput("Please choose:  \n1.Login \n2.Complete Profile \n3.Quit: ");
+		if (choice.equals("1")) {
+			String username = userInput("Enter username: ");
+			String password = userInput("Enter password: ");
+			// login and continue if successful but retry if failed
+			while (!login(username, password)) {
+				username = userInput("Enter username: ");
+				password = userInput("Enter password: ");
+			}
 
-		String username = userInput("Enter username: ");
-		String password = userInput("Enter password: ");
-		// login and continue if successful but retry if failed
-		while (!login(username, password)) {
-			username = userInput("Enter username: ");
-			password = userInput("Enter password: ");
+			if (username.equals("admin")) {
+				System.out.println("Welcome Admin");
+				// ask admin to create a new patient profile, update patient profile or export patient data
+				String adminChoice = userInput(
+						"Please choose:  \n1.Create new patient profile \n2.Update patient profile \n3.Export patient data \n4.Export patient : ");
+				if (adminChoice.equals("1")) {
+					Patient patient = createPatientProfile();
+					System.out.println("Patient profile created successfully");
+					System.out.println(patient);
+					main(args);
+				} else if (adminChoice.equals("2")) {
+					Patient updatedPatient = new Patient(null, null, null, 0, null, null, null, false, null, false,
+							null, 0);
+					String patient_uuid = userInput("Enter patient uuid: ");
+					System.out.println("Getting" + patient_uuid + "...");
+					updatedPatient.set_uuid(generateUUID());
+					updatedPatient.toString();
+					System.out.println("Patient profile updated successfully");
+					System.out.println(updatedPatient);
+					main(args);
+				} else if (adminChoice.equals("3")) {
+					// export patient data
+					runCommand("cat user-store.txt > patient-data.csv");
+					System.out.println("Patient data exported successfully");
+					main(args);
+				} else if (adminChoice.equals("4")) {
+					// export patient data
+					runCommand("cat user-store.txt > patient-analytics.csv");
+					System.out.println("Patient data exported successfully");
+					main(args);
+				} else {
+					System.out.println("Invalid choice");
+					main(args);
+				}
+			} else {
+				System.out.println("Welcome Patient " + username);
+				Patient patient = completePatientProfile();
+				//Ask patient to view their profile, update their profile or delete their profile
+				String patientChoice = userInput(
+						"Please choose:  \n1.View patient profile \n2.Update patient profile \n3.Delete patient profile: ");
+				if (patientChoice.equals("1")) {
+					System.out.println(patient);
+				} else if (patientChoice.equals("2")) {
+					Patient updatedPatient = new Patient(null, null, null, 0, null, null, null, false, null, false,
+							null, 0);
+					String patient_uuid = userInput("Enter patient uuid: ");
+					updatedPatient.set_uuid(patient_uuid);
+					updatedPatient.toString();
+					System.out.println("Patient profile updated successfully");
+					System.out.println(updatedPatient);
+				} else if (patientChoice.equals("3")) {
+					System.out.println("Patient profile deleted successfully");
+					main(args);
+				} else {
+					System.out.println("Invalid choice");
+				}
+			}
+		} else if (choice.equals("2")) {
+			Patient patient = completePatientProfile();
+			System.out.println("Patient profile created successfully");
+			System.out.println(patient);
+			main(args);
+		} else if (choice.equals("3")) {
+			System.out.println("Goodbye");
+			System.exit(0);
+		} else {
+			System.out.println("Invalid choice");
+			System.exit(0);
 		}
 
-		Patient patient = createPatientProfile();
-		System.out.println("Patient profile created successfully");
-		System.out.println(patient);
+
+		// String username = userInput("Enter username: ");
+		// String password = userInput("Enter password: ");
+		//// login and continue if successful but retry if failed
+		// while (!login(username, password)) {
+		// 	username = userInput("Enter username: ");
+		// 	password = userInput("Enter password: ");
+		// }
+
+		// Patient patient = createPatientProfile();
+		// System.out.println("Patient profile created successfully");
+		// System.out.println(patient);
 	}
 }
