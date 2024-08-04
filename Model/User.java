@@ -5,13 +5,15 @@ public class User {
 	String last_name;
 	String username;
 	int age;
-	//dob
 	String dob;
+	enum role {
+		ADMIN, PATIENT
+	}
 
 	public User() {
 	}
 
-	public User(String first_name, String last_name, String username, int age, String dob) {
+	public User(String first_name, String last_name, String username, int age, String dob, role role) {
 		this.first_name = first_name;
 		this.last_name = last_name;
 		this.username = username;

@@ -1,1 +1,4 @@
 admin,admin
+matia,mukasa,mmukasa,26,13021998,matiamukasa@gmail.com,LPT0002,false,null,false,null,0,mmukasa
+mark,iraguha,miraguha,20,18021998,mark@markworld.com,LPT0003,false,null,false,null,0,miraguha
+maria,makhulo,mmaria,26,12-12-1998,maria@maria.com,LPT0004,false,null,false,null,0,mmaria,KEN
