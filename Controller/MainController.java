@@ -189,6 +189,9 @@ public class MainController {
 					runCommand("cat user-store.txt > patient-analytics.csv");
 					System.out.println("Patient data exported successfully");
 					main(args);
+				} else if (adminChoice.equals("5")) {
+					System.out.println("Admin logged out successfully");
+					main(args);				
 				} else {
 					System.out.println("Invalid choice");
 					main(args);
