@@ -1,18 +1,22 @@
 // MainController.java
 package Controller;
 
-import Controller.Database.DatabaseController;
+import Model.Admin;
 import Model.Patient;
 import java.io.*;
 
 public class MainController {
 
 	public static void checkStorage() {
-		File file = new File("user-store.txt");
+		File file = new File("storage/user-store.txt");
 		if (!file.exists()) {
 			System.out.println("Welcome to Life Prognosis App! Initializing application...");
+			Admin admin = new Admin("admin", "admin", "admin", 0, null, "admin");
+			String adminDetails = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername() + ","
+					+ admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword();
 			try {
-				executeCommand("Scripts/initiator.sh");
+				String cmd = "script/insert.sh " + adminDetails;
+				executeCommand(cmd);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -72,8 +76,12 @@ public class MainController {
 
 	public static String generateUUID() {
 		String prefix = "LPT";
-		DatabaseController cmd = new DatabaseController();
-		String uuid = runCommand(cmd.getLineCount("user-store.txt"));
+		String uuid = "";
+		try {
+			uuid = executeCommand("Script/wordcount.sh");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		if (uuid.length() < 5) {
 			int zeros = 5 - uuid.length();
 			for (int i = 0; i < zeros; i++) {
@@ -149,6 +157,13 @@ public class MainController {
 	}
 
 	public static void main(String[] args) {
+		// make all scripts executable
+		try {
+			executeCommand("chmod +x Script/*");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
 		checkStorage();
 
 		// Ask user to Login or Complete Profile

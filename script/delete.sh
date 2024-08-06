@@ -1,4 +1,4 @@
-#!bin/bash
+#! /bin/bash
 
 # Delete the specific line in the file
 sed -i "${line_number}d" "$user-store.txt"
