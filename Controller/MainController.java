@@ -11,7 +11,11 @@ public class MainController {
 		File file = new File("user-store.txt");
 		if (!file.exists()) {
 			System.out.println("Welcome to Life Prognosis App! Initializing application...");
-			runCommand("echo 'admin,admin' > user-store.txt");
+			try {
+				executeCommand("Scripts/initiator.sh");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			System.out.println("Initialization complete");
 		}
 	}
@@ -173,11 +177,9 @@ public class MainController {
 					Patient patient = getPatientDetails(patient_uuid);
 					// update patient email
 					String updatedEmail = userInput("Enter new email: ");
-					patient.set_email(updatedEmail);
 					// replace the email in the user-store.txt with the updated email
 					runCommand("sed -i 's/" + patient.get_email() + "/" + updatedEmail + "/' user-store.txt");
 					System.out.println("Patient profile updated successfully");
-					System.out.println(patient.toString());
 					main(args);
 				} else if (adminChoice.equals("3")) {
 					// export patient data
@@ -339,5 +341,35 @@ public class MainController {
 			return null;
 		}
 		return countryStore[5];
+	}
+
+	public static String hashUserPassword(String password) {
+		try {
+			return executeCommand("Scripts/hashpwd.sh");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static String executeCommand(String scriptPath) throws InterruptedException {
+		try {
+			Process process = Runtime.getRuntime().exec(scriptPath);
+
+			// Read output from the script
+			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			String line;
+			while ((line = reader.readLine()) != null) {
+				System.out.println(line);
+			}
+
+			int exitVal = process.waitFor();
+			System.out.println("Script execution completed with exit code: " + exitVal);
+			return line;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 }
