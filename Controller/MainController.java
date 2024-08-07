@@ -16,6 +16,8 @@ public class MainController {
 			String cmd = "script/insert.sh " + adminDetails;
 			executeCommand(cmd);
 			System.out.println("Initialization complete");
+		} else {
+			System.out.println("Welcome to Life Prognosis App!");
 		}
 	}
 
