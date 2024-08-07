@@ -1,10 +1,8 @@
-// MainController.java
 package Controller;
 
 import Model.Admin;
 import Model.Patient;
 import java.io.*;
-import java.util.Arrays;
 
 public class MainController {
 
@@ -85,7 +83,7 @@ public class MainController {
 		patient.setAge(safeParseInt(userInput("Enter age: ")));
 		patient.setDob(userInput("Enter date of birth: "));
 		patient.set_country_of_residence(getPatientCountryISO(userInput("Enter country of residence: ")));
-		patient.set_password(userInput("Enter Password: ")); // Prompt for the password
+		patient.set_password(hashUserPassword(userInput("Create secure password: "))); // Prompt for the password
 
 		// tell patient that the next steps are optional and can be completed later. ask
 		// if they want to continue
@@ -111,6 +109,8 @@ public class MainController {
 				+ patient.get_medication_start_date() + "," + patient.get_years_without_medication() + ","
 				+ patient.get_password() + "," + patient.get_country_of_residence();
 
+		System.out.println(updatedLine);
+
 		// Update the user's line in the user-store.txt file
 		executeCommand("script/edit.sh " + line_number + " " + updatedLine.replace("/", "-"));// this produces an
 																								// error.. fix it
@@ -125,10 +125,11 @@ public class MainController {
 		// Ask user to Login or Complete Profile
 		String choice = userInput("Please choose: \n1.Login \n2.Complete Profile \n3.Quit: ");
 		if (choice.equals("1")) {
+			// login and continue if successful but retry if failed
 			String username = userInput("Enter username: ");
 			String password = userInput("Enter password: ");
-			// login and continue if successful but retry if failed
 			while (!login(username, password)) {
+				System.out.println("Login failed. Please try again.");
 				username = userInput("Enter username: ");
 				password = userInput("Enter password: ");
 			}
@@ -262,8 +263,8 @@ public class MainController {
 			System.out.println("Patient login commenced");
 			// Patient login
 			try {
-				Patient patient = getPatientDetails(username); // the pas
-				if (patient != null && patient.get_password().trim().equals(password)) {
+				Patient patient = getPatientDetails(username);
+				if (patient != null && patient.get_password().trim().equals(hashUserPassword(password).trim())) {
 					System.out.println("Patient login successful");
 					return true;
 				} else {
@@ -293,7 +294,6 @@ public class MainController {
 
 	public static Patient getPatientDetails(String feild) {
 		String[] userStore = executeCommand("script/search.sh " + feild + " storage/user-store.txt").split(":");
-		System.out.println(Arrays.toString(userStore));
 		if (userStore.length < 2) {
 			System.out.println("Invalid " + feild + " . Please try again.");
 			return null;
@@ -318,7 +318,7 @@ public class MainController {
 	}
 
 	public static String hashUserPassword(String password) {
-		return executeCommand("script/hashpwd.sh");
+		return executeCommand("script/hashpwd.sh " + password).trim();
 	}
 
 	public static String executeCommand(String scriptPath) {
