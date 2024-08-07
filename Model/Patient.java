@@ -1,5 +1,7 @@
 package Model;
 
+//TODO: add patient password attribute
+
 public class Patient extends User {
 	String email;
 	String uuid;
@@ -8,11 +10,13 @@ public class Patient extends User {
 	boolean is_on_antiretroviral_therapy;
 	String medication_start_date;
 	int years_without_medication;
+	String password;
+	String country_of_residence;
 
 	public Patient(String first_name, String last_name, String username,
 			int age, String dob, String email, String uuid, boolean is_hiv_positive, String diagnosis_date,
-			boolean is_on_antiretroviral_therapy, String medication_start_date, int years_without_medication) {
-		super(first_name, last_name, username, age, dob);
+			boolean is_on_antiretroviral_therapy, String medication_start_date, int years_without_medication, String password, String country_of_residence) {
+		super(first_name, last_name, username, age, dob, role.PATIENT);
 		this.email = email;
 		this.uuid = uuid;
 		this.is_hiv_positive = is_hiv_positive;
@@ -20,6 +24,8 @@ public class Patient extends User {
 		this.is_on_antiretroviral_therapy = is_on_antiretroviral_therapy;
 		this.medication_start_date = medication_start_date;
 		this.years_without_medication = years_without_medication;
+		this.password = password;
+		this.country_of_residence = country_of_residence;
 	}
 
 	public String get_email() {
@@ -76,6 +82,22 @@ public class Patient extends User {
 
 	public void set_years_without_medication(int years_without_medication) {
 		this.years_without_medication = years_without_medication;
+	}
+
+	public String get_password() {
+		return password;
+	}
+
+	public void set_password(String password) {
+		this.password = password;
+	}
+
+	public String get_country_of_residence() {
+		return country_of_residence;
+	}
+
+	public void set_country_of_residence(String country_of_residence) {
+		this.country_of_residence = country_of_residence;
 	}
 
 	@Override
