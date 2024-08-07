@@ -1,7 +1,5 @@
 package Model;
 
-import java.util.Arrays;
-
 //TODO: add patient password attribute
 
 public class Patient extends User {

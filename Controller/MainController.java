@@ -55,7 +55,6 @@ public class MainController {
 				uuid = "0" + uuid;
 			}
 		}
-		System.out.println("UUID: " + (prefix + uuid).trim());
 		return (prefix + uuid).trim();
 	}
 
@@ -70,8 +69,6 @@ public class MainController {
 				+ patient.is_on_antiretroviral_therapy() + ","
 				+ patient.get_medication_start_date() + "," + patient.get_years_without_medication() + ","
 				+ patient.get_password() + "," + patient.get_country_of_residence();
-
-		System.out.println(patientDetails);
 
 		// Save the new patient profile (email, UUID) to user-store.txt
 		executeCommand("script/insert.sh " + patientDetails);
@@ -183,7 +180,6 @@ public class MainController {
 				if (patientChoice.equals("1")) {
 					double lifeExpectancy = lifeExpectancy(patient.get_country_of_residence(),
 							(double) patient.getAge(), patient.get_years_without_medication());
-					System.out.println("Life Expectancy: " + lifeExpectancy);
 					// output patient profile with nice formatting
 					System.out.println(patient.getFirstName() + "'s Profile \n" + "First Name: "
 							+ patient.getFirstName()
@@ -237,8 +233,7 @@ public class MainController {
 				System.out.println("Profile already completed. Please login to continue.");
 				main(args);
 			}
-			System.out.println(patient.get_uuid());
-			System.out.println(patient.get_email());
+			System.out.println("Editing patient profile for: " + patient.get_email());
 			completePatientProfile(patient, line_number);
 			main(args);
 		} else if (choice.equals("3")) {
