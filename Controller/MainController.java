@@ -194,6 +194,9 @@ public class MainController {
 							+ "\nMedication Start Date: " + patient.get_medication_start_date()
 							+ "\nYears Without Medication: " + patient.get_years_without_medication()
 							+ "\nLife Expectancy: " + lifeExpectancy);
+
+					userInput("Press Enter to logout");
+					main(args);
 				} else if (patientChoice.equals("2")) {
 					String uuid = patient.get_uuid();
 					String[] userStore = executeCommand("script/search.sh " + uuid + " storage/user-store.txt")
