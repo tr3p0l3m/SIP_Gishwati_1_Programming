@@ -4,6 +4,7 @@ package Controller;
 import Model.Admin;
 import Model.Patient;
 import java.io.*;
+import java.util.Arrays;
 
 public class MainController {
 
@@ -14,12 +15,8 @@ public class MainController {
 			Admin admin = new Admin("admin", "admin", "admin", 0, null, "admin");
 			String adminDetails = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername() + ","
 					+ admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword();
-			try {
-				String cmd = "script/insert.sh " + adminDetails;
-				executeCommand(cmd);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			String cmd = "script/insert.sh " + adminDetails;
+			executeCommand(cmd);
 			System.out.println("Initialization complete");
 		}
 	}
@@ -36,36 +33,10 @@ public class MainController {
 		return input;
 	}
 
-	public static String runCommand(String command) {
-		ProcessBuilder processBuilder = new ProcessBuilder();
-		processBuilder.command("bash", "-c", command);
-		String output = "";
-		try {
-			Process process = processBuilder.start();
-
-			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			String line;
-			while ((line = reader.readLine()) != null) {
-				output += line + "\n";
-			}
-
-			BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			while ((line = errorReader.readLine()) != null) {
-				System.err.println(line);
-			}
-
-			int exitCode = process.waitFor();
-			System.out.println("\nExited with error code : " + exitCode);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		return output;
-	}
-
 	public static double lifeExpectancy(String country, double age, int yearsWithoutMedication) {
-		String[] countryStore = runCommand("grep -n " + country.trim() + " life-expectancy.csv").split(",");
+		String[] countryStore;
+		country = country.trim();
+		countryStore = executeCommand("script/search.sh " + country + " storage/life-expectancy.csv").split(",");
 		if (countryStore.length < 7) {
 			System.out.println("Invalid " + country + " . Please try again.");
 			return 0;
@@ -77,17 +48,14 @@ public class MainController {
 	public static String generateUUID() {
 		String prefix = "LPT";
 		String uuid = "";
-		try {
-			uuid = executeCommand("Script/wordcount.sh");
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		uuid = executeCommand("script/wordcount.sh");
 		if (uuid.length() < 5) {
 			int zeros = 5 - uuid.length();
 			for (int i = 0; i < zeros; i++) {
 				uuid = "0" + uuid;
 			}
 		}
+		System.out.println("UUID: " + (prefix + uuid).trim());
 		return (prefix + uuid).trim();
 	}
 
@@ -103,8 +71,10 @@ public class MainController {
 				+ patient.get_medication_start_date() + "," + patient.get_years_without_medication() + ","
 				+ patient.get_password() + "," + patient.get_country_of_residence();
 
+		System.out.println(patientDetails);
+
 		// Save the new patient profile (email, UUID) to user-store.txt
-		runCommand("echo '" + patientDetails + "' >> user-store.txt");
+		executeCommand("script/insert.sh " + patientDetails);
 
 		System.out.println("Patient profile initiated. UUID generated: " + patient.get_uuid());
 		return patient;
@@ -145,11 +115,8 @@ public class MainController {
 				+ patient.get_password() + "," + patient.get_country_of_residence();
 
 		// Update the user's line in the user-store.txt file
-		// replaced all forward slashes with hyphens to avoid sed command errors
-		String command = "sed '" + line_number + "s/.*/" + updatedLine.replace("/", "-")
-				+ "/' user-store.txt > temp.txt && mv temp.txt user-store.txt";
-		System.out.println(command);
-		runCommand(command);// this produces an error.. fix it
+		executeCommand("script/edit.sh " + line_number + " " + updatedLine.replace("/", "-"));// this produces an
+																								// error.. fix it
 
 		// Notify the user that the profile has been completed
 		System.out.println("Profile completed successfully. Please log in with your credentials.");
@@ -157,15 +124,7 @@ public class MainController {
 	}
 
 	public static void main(String[] args) {
-		// make all scripts executable
-		try {
-			executeCommand("chmod +x Script/*");
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
 		checkStorage();
-
 		// Ask user to Login or Complete Profile
 		String choice = userInput("Please choose: \n1.Login \n2.Complete Profile \n3.Quit: ");
 		if (choice.equals("1")) {
@@ -191,24 +150,25 @@ public class MainController {
 					String patient_uuid = userInput("Enter patient uuid: ");
 					Patient patient = getPatientDetails(patient_uuid);
 					// update patient email
-					String updatedEmail = userInput("Enter new email: ");
+					String updatedEmail = userInput("Enter new email: ").trim();
 					// replace the email in the user-store.txt with the updated email
-					runCommand("sed -i 's/" + patient.get_email() + "/" + updatedEmail + "/' user-store.txt");
+					executeCommand("script/edit-email.sh " + patient.get_email() + " " + updatedEmail);
 					System.out.println("Patient profile updated successfully");
 					main(args);
 				} else if (adminChoice.equals("3")) {
 					// export patient data
-					runCommand("cat user-store.txt > patient-data.csv");
-					System.out.println("Patient data exported successfully");
+					// TODO: remember to format the export
+					executeCommand("script/export.sh " + "storage/user-store.txt" + " storage/patient-data.csv");
+					System.out.println("Patient data exported successfully!");
 					main(args);
 				} else if (adminChoice.equals("4")) {
 					// export patient data
-					runCommand("cat user-store.txt > patient-analytics.csv");
+					executeCommand("touch storage/patient-analytics.csv");
 					System.out.println("Patient data exported successfully");
 					main(args);
 				} else if (adminChoice.equals("5")) {
 					System.out.println("Admin logged out successfully");
-					main(args);				
+					main(args);
 				} else {
 					System.out.println("Invalid choice");
 					main(args);
@@ -237,15 +197,17 @@ public class MainController {
 							+ "\nLife Expectancy: " + lifeExpectancy);
 				} else if (patientChoice.equals("2")) {
 					String uuid = patient.get_uuid();
-					String[] userStore = runCommand("grep -n " + uuid + " user-store.txt").split(":");
+					String[] userStore = executeCommand("script/search.sh " + uuid + " storage/user-store.txt")
+							.split(":");
+					System.out.println(userStore[1]);
 					if (userStore.length < 2) {
 						System.out.println("Something Went Wrong. Please try again.");
 						main(args);
 					}
 					int line_number = Integer.parseInt(userStore[0]);
-					Patient updatedPatient = completePatientProfile(patient, line_number);
+					completePatientProfile(patient, line_number);
 					System.out.println("Patient profile updated successfully");
-					System.out.println(updatedPatient);
+					main(args);
 				} else if (patientChoice.equals("3")) {
 					System.out.println("Patient profile deleted successfully");
 					main(args);
@@ -255,7 +217,7 @@ public class MainController {
 			}
 		} else if (choice.equals("2")) {
 			String uuid = userInput("Enter UUID: ");
-			String[] userStore = runCommand("grep -n " + uuid + " user-store.txt").split(":");
+			String[] userStore = executeCommand("script/search.sh " + uuid + " storage/user-store.txt").split(":");
 			if (userStore.length < 2) {
 				System.out.println("Invalid UUID. Please try again.");
 				main(args);
@@ -335,7 +297,8 @@ public class MainController {
 	}
 
 	public static Patient getPatientDetails(String feild) {
-		String[] userStore = runCommand("grep -n " + feild + " user-store.txt").split(":");
+		String[] userStore = executeCommand("script/search.sh " + feild + " storage/user-store.txt").split(":");
+		System.out.println(Arrays.toString(userStore));
 		if (userStore.length < 2) {
 			System.out.println("Invalid " + feild + " . Please try again.");
 			return null;
@@ -350,7 +313,8 @@ public class MainController {
 	}
 
 	public static String getPatientCountryISO(String country) {
-		String[] countryStore = runCommand("grep -n " + country.trim() + " life-expectancy.csv").split(",");
+		country = country.substring(0, 1).toUpperCase() + country.substring(1); // Capitalize the first letter
+		String[] countryStore = executeCommand("script/search.sh " + country.trim() + " storage/life-expectancy.csv").split(",");
 		if (countryStore.length < 7) {
 			System.out.println("Invalid " + country + " . Please try again.");
 			return null;
@@ -359,32 +323,24 @@ public class MainController {
 	}
 
 	public static String hashUserPassword(String password) {
-		try {
-			return executeCommand("Scripts/hashpwd.sh");
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			return null;
-		}
+		return executeCommand("script/hashpwd.sh");
 	}
 
-	public static String executeCommand(String scriptPath) throws InterruptedException {
+	public static String executeCommand(String scriptPath) {
+		String output = "";
 		try {
 			Process process = Runtime.getRuntime().exec(scriptPath);
 
 			// Read output from the script
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			String line;
+			String line = "";
 			while ((line = reader.readLine()) != null) {
-				System.out.println(line);
+				output = line + "\n";
 			}
-
-			int exitVal = process.waitFor();
-			System.out.println("Script execution completed with exit code: " + exitVal);
-			return line;
-
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
+		return output;
 	}
 }

@@ -1,8 +1,5 @@
-#!bin/bash
+#! /bin/bash
 
 #Edit the specific line in the file
-
-sed -i "${line_number}s/.*/${new_content}/"
-"$user-store.txt"
-
-echo "Line $line_number in $user-store.txt has been updated to: $new_content"
+#1 - line number, 2 - data
+sed "${1}s/.*/${2}/" storage/user-store.txt > temp.txt && mv temp.txt storage/user-store.txt

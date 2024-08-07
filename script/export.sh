@@ -1,4 +1,5 @@
 #! /bin/bash
 
 #export to the destination file
-cat "$source_filename" > "$destination_filename"
+#1 - source file, 2 - destination file
+cat "$1" > "$2"
