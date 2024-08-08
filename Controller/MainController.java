@@ -13,8 +13,7 @@ public class MainController {
 			Admin admin = new Admin("admin", "admin", "admin", 0, null, "admin");
 			String adminDetails = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername() + ","
 					+ admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword();
-			String cmd = "script/insert.sh " + adminDetails;
-			executeCommand(cmd);
+			executeCommand(new String[] { "script/insert.sh", adminDetails });
 			System.out.println("Initialization complete");
 		} else {
 			System.out.println("Welcome to Life Prognosis App!");
@@ -36,7 +35,8 @@ public class MainController {
 	public static double lifeExpectancy(String country, double age, int yearsWithoutMedication) {
 		String[] countryStore;
 		country = country.trim();
-		countryStore = executeCommand("script/search.sh " + country + " storage/life-expectancy.csv").split(",");
+		countryStore = executeCommand(new String[] { "script/search.sh ", country, " storage/life-expectancy.csv" })
+				.split(",");
 		if (countryStore.length < 7) {
 			System.out.println("Invalid " + country + " . Please try again.");
 			return 0;
@@ -48,7 +48,7 @@ public class MainController {
 	public static String generateUUID() {
 		String prefix = "LPT";
 		String uuid = "";
-		uuid = executeCommand("script/wordcount.sh");
+		uuid = executeCommand(new String[] { "script/wordcount.sh" });
 		if (uuid.length() < 5) {
 			int zeros = 5 - uuid.length();
 			for (int i = 0; i < zeros; i++) {
@@ -71,7 +71,7 @@ public class MainController {
 				+ patient.get_password() + "," + patient.get_country_of_residence();
 
 		// Save the new patient profile (email, UUID) to user-store.txt
-		executeCommand("script/insert.sh " + patientDetails);
+		executeCommand(new String[] { "script/insert.sh", patientDetails });
 
 		System.out.println("Patient profile initiated. UUID generated: " + patient.get_uuid());
 		return patient;
@@ -94,11 +94,16 @@ public class MainController {
 		if (optional.equalsIgnoreCase("Y")) {
 			// Prompt for medical details
 			patient.set_hiv_positive(Boolean.parseBoolean(userInput("Are you HIV positive? (true/false): ")));
-			patient.set_diagnosis_date(userInput("Enter diagnosis date: "));
-			patient.set_on_antiretroviral_therapy(
-					Boolean.parseBoolean(userInput("Are you on antiretroviral therapy? (true/false): ")));
-			patient.set_medication_start_date(userInput("Enter medication start date: "));
-			patient.set_years_without_medication(safeParseInt(userInput("Enter years without medication: ")));
+			if (patient.is_hiv_positive()) {
+				patient.set_diagnosis_date(userInput("Enter diagnosis date: "));
+				patient.set_on_antiretroviral_therapy(
+						Boolean.parseBoolean(userInput("Are you on antiretroviral therapy? (true/false): ")));
+				if (patient.is_on_antiretroviral_therapy()) {
+					patient.set_medication_start_date(userInput("Enter medication start date: "));
+				} else {
+					patient.set_years_without_medication(safeParseInt(userInput("Enter years without medication: ")));
+				}
+			}
 		}
 
 		// TODO: confirm password
@@ -111,11 +116,10 @@ public class MainController {
 				+ patient.get_medication_start_date() + "," + patient.get_years_without_medication() + ","
 				+ patient.get_password() + "," + patient.get_country_of_residence();
 
-		System.out.println(updatedLine);
+		updatedLine = updatedLine.replace("/", "-");
 
 		// Update the user's line in the user-store.txt file
-		executeCommand("script/edit.sh " + line_number + " " + updatedLine.replace("/", "-"));// this produces an
-																								// error.. fix it
+		executeCommand(new String[] { "script/edit.sh", Integer.toString(line_number), updatedLine });
 
 		// Notify the user that the profile has been completed
 		System.out.println("Profile completed successfully. Please log in with your credentials.");
@@ -141,7 +145,7 @@ public class MainController {
 				// ask admin to create a new patient profile, update patient profile or export
 				// patient data
 				String adminChoice = userInput(
-						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Export patient data \n4.Export patient analytics \n5. Logout ");
+						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Delete Patient Profile \n4.Export patient data \n5.Export patient analytics \n6. Logout ");
 				if (adminChoice.equals("1")) {
 					initiatePatientProfile();
 					System.out.println("Patient profile created successfully");
@@ -152,21 +156,29 @@ public class MainController {
 					// update patient email
 					String updatedEmail = userInput("Enter new email: ").trim();
 					// replace the email in the user-store.txt with the updated email
-					executeCommand("script/edit-email.sh " + patient.get_email() + " " + updatedEmail);
+					executeCommand(new String[] { "script/edit-email.sh", patient.get_email(), updatedEmail });
 					System.out.println("Patient profile updated successfully");
 					main(args);
 				} else if (adminChoice.equals("3")) {
-					// export patient data
-					// TODO: remember to format the export
-					executeCommand("script/export.sh " + "storage/user-store.txt" + " storage/patient-data.csv");
-					System.out.println("Patient data exported successfully!");
+					String uuid = userInput("Enter UUID: ");
+					String line_number = executeCommand(
+							new String[] { "script/search.sh", uuid, "storage/user-store.txt" }).split(":")[0];
+					executeCommand(new String[] { "script/delete.sh", line_number });
+					System.out.println("Patient profile deleted successfully!");
 					main(args);
 				} else if (adminChoice.equals("4")) {
 					// export patient data
-					executeCommand("touch storage/patient-analytics.csv");
-					System.out.println("Patient data exported successfully");
+					// TODO: remember to format the export
+					executeCommand(
+							new String[] { "script/export.sh", "storage/user-store.txt", "storage/patient-data.csv" });
+					System.out.println("Patient data exported successfully!");
 					main(args);
 				} else if (adminChoice.equals("5")) {
+					// export patient data
+					executeCommand(new String[] { "touch", "storage/patient-analytics.csv" });
+					System.out.println("Patient data exported successfully");
+					main(args);
+				} else if (adminChoice.equals("6")) {
 					System.out.println("Admin logged out successfully");
 					main(args);
 				} else {
@@ -179,7 +191,7 @@ public class MainController {
 				// Ask patient to view their profile, update their profile or delete their
 				// profile
 				String patientChoice = userInput(
-						"Please choose: \n1.View patient profile \n2.Update patient profile \n3.Delete patient profile: ");
+						"Please choose: \n1.View patient profile \n2.Update patient profile \n3.Delete patient profile \n4.Logout ");
 				if (patientChoice.equals("1")) {
 					double lifeExpectancy = lifeExpectancy(patient.get_country_of_residence(),
 							(double) patient.getAge(), patient.get_years_without_medication());
@@ -199,8 +211,8 @@ public class MainController {
 					main(args);
 				} else if (patientChoice.equals("2")) {
 					String uuid = patient.get_uuid();
-					String[] userStore = executeCommand("script/search.sh " + uuid + " storage/user-store.txt")
-							.split(":");
+					String[] commands = { "script/search.sh", uuid, "storage/user-store.txt" };
+					String[] userStore = executeCommand(commands).split(":");
 					System.out.println(userStore[1]);
 					if (userStore.length < 2) {
 						System.out.println("Something Went Wrong. Please try again.");
@@ -213,13 +225,18 @@ public class MainController {
 				} else if (patientChoice.equals("3")) {
 					System.out.println("Patient profile deleted successfully");
 					main(args);
+				} else if (patientChoice.equals("4")) {
+					System.out.println("Patient logged out successfully");
+					main(args);
 				} else {
 					System.out.println("Invalid choice");
+					main(args);
 				}
 			}
 		} else if (choice.equals("2")) {
 			String uuid = userInput("Enter UUID: ");
-			String[] userStore = executeCommand("script/search.sh " + uuid + " storage/user-store.txt").split(":");
+			String[] commands = { "script/search.sh", uuid, "storage/user-store.txt" };
+			String[] userStore = executeCommand(commands).split(":");
 			if (userStore.length < 2) {
 				System.out.println("Invalid UUID. Please try again.");
 				main(args);
@@ -298,7 +315,8 @@ public class MainController {
 	}
 
 	public static Patient getPatientDetails(String feild) {
-		String[] userStore = executeCommand("script/search.sh " + feild + " storage/user-store.txt").split(":");
+		String[] commands = { "script/search.sh", feild, "storage/user-store.txt" };
+		String[] userStore = executeCommand(commands).split(":");
 		if (userStore.length < 2) {
 			System.out.println("Invalid " + feild + " . Please try again.");
 			return null;
@@ -314,7 +332,8 @@ public class MainController {
 
 	public static String getPatientCountryISO(String country) {
 		country = country.substring(0, 1).toUpperCase() + country.substring(1); // Capitalize the first letter
-		String[] countryStore = executeCommand("script/search.sh " + country.trim() + " storage/life-expectancy.csv").split(",");
+		String[] commands = { "script/search.sh", country.trim(), "storage/life-expectancy.csv" };
+		String[] countryStore = executeCommand(commands).split(",");
 		if (countryStore.length < 7) {
 			System.out.println("Invalid " + country + " . Please try again.");
 			return null;
@@ -323,24 +342,31 @@ public class MainController {
 	}
 
 	public static String hashUserPassword(String password) {
-		return executeCommand("script/hashpwd.sh " + password).trim();
+		String[] commands = { "script/hashpwd.sh", password };
+		return executeCommand(commands).trim();
 	}
 
-	public static String executeCommand(String scriptPath) {
+	public static String executeCommand(String[] commands) {
+
 		String output = "";
 		try {
-			Process process = Runtime.getRuntime().exec(scriptPath);
+			Process process = Runtime.getRuntime().exec(commands);
 
 			// Read output from the script
 			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+			// process wait for 30 milliseconds
+			process.waitFor(30, java.util.concurrent.TimeUnit.MILLISECONDS);
+
 			String line = "";
 			while ((line = reader.readLine()) != null) {
 				output = line + "\n";
 			}
-		} catch (IOException e) {
+		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 			return null;
 		}
+
 		return output;
 	}
 }
