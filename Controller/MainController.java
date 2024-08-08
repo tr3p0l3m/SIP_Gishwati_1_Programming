@@ -10,9 +10,22 @@ public class MainController {
 		File file = new File("storage/user-store.txt");
 		if (!file.exists()) {
 			System.out.println("Welcome to Life Prognosis App! Initializing application...");
-			Admin admin = new Admin("admin", "admin", "admin", 0, null, "admin");
+			String choice = userInput("Would you like to create a custom admin account? (Y/N): ");
+			Admin admin = null;
+			if (choice.equalsIgnoreCase("Y")) {
+				String firstName = userInput("Enter first name: ");
+				String lastName = userInput("Enter last name: ");
+				String username = userInput("Enter username: ");
+				int age = safeParseInt(userInput("Enter age: "));
+				String dob = userInput("Enter date of birth: ");
+				String password = hashUserPassword(userInput("Create secure password: "));
+				admin = new Admin(firstName, lastName, username, age, dob, password.trim());
+			} else {
+				String password = hashUserPassword("admin");
+				admin = new Admin("admin", "admin", "admin", 0, null, password);
+			}
 			String adminDetails = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername() + ","
-					+ admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword();
+					+ admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword().trim();
 			executeCommand(new String[] { "script/insert.sh", adminDetails });
 			System.out.println("Initialization complete");
 		} else {
@@ -273,8 +286,10 @@ public class MainController {
 
 		if (username.equals("admin")) {
 			System.out.println("Admin login commenced");
+			Admin admin = getAdminDetails(username);
+			System.out.println(admin.getPassword().trim());
 			// Admin login
-			if (password.equals("admin")) {
+			if (admin.getPassword().trim().equals(hashUserPassword(password).trim())) {
 				System.out.println("Admin login successful");
 				return true;
 			} else {
@@ -328,6 +343,20 @@ public class MainController {
 				Boolean.parseBoolean(userDetails[9]), userDetails[10], safeParseInt(userDetails[11]),
 				userDetails[12], userDetails[13]);
 		return patient;
+	}
+
+	public static Admin getAdminDetails(String feild) {
+		String[] commands = { "script/search.sh", feild, "storage/user-store.txt" };
+		String[] userStore = executeCommand(commands).split(":");
+		if (userStore.length < 2) {
+			System.out.println("Invalid " + feild + " . Please try again.");
+			return null;
+		}
+		String user = userStore[1];
+		String[] userDetails = user.split(",");
+		Admin admin = new Admin(userDetails[0], userDetails[1], userDetails[2], safeParseInt(userDetails[3]),
+				userDetails[4], userDetails[5]);
+		return admin;
 	}
 
 	public static String getPatientCountryISO(String country) {
