@@ -15,18 +15,17 @@ public class MainController {
 			if (choice.equalsIgnoreCase("Y")) {
 				String firstName = userInput("Enter first name: ");
 				String lastName = userInput("Enter last name: ");
-				String username = userInput("Enter username: ");
 				int age = safeParseInt(userInput("Enter age: "));
 				String dob = userInput("Enter date of birth: ");
 				String password = hashUserPassword(userInput("Create secure password: "));
-				admin = new Admin(firstName, lastName, username, age, dob, password.trim());
+				admin = new Admin(firstName, lastName, "admin", age, dob, password.trim());
 			} else {
 				String password = hashUserPassword("admin");
 				admin = new Admin("admin", "admin", "admin", 0, null, password);
 			}
 			String adminDetails = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername() + ","
 					+ admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword().trim();
-			executeCommand(new String[] { "script/insert.sh", adminDetails });
+			executeCommand(new String[] { "script/insert.sh", adminDetails});
 			System.out.println("Initialization complete");
 		} else {
 			System.out.println("Welcome to Life Prognosis App!");
@@ -158,7 +157,7 @@ public class MainController {
 				// ask admin to create a new patient profile, update patient profile or export
 				// patient data
 				String adminChoice = userInput(
-						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Delete Patient Profile \n4.Export patient data \n5.Export patient analytics \n6. Logout ");
+						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Delete Patient Profile \n4.Export patient data \n5.Export patient analytics \n6.Edit Admin Details \n7.Logout ");
 				if (adminChoice.equals("1")) {
 					initiatePatientProfile();
 					System.out.println("Patient profile created successfully");
@@ -192,6 +191,22 @@ public class MainController {
 					System.out.println("Patient data exported successfully");
 					main(args);
 				} else if (adminChoice.equals("6")) {
+					// edit admin details
+					String line_number = executeCommand(new String[] { "script/search.sh", "admin", "storage/user-store.txt" })
+							.split(":")[0];
+					Admin admin = getAdminDetails("admin");
+					admin.setFirstName(userInput("Enter first name: "));
+					admin.setLastName(userInput("Enter last name: "));
+					admin.setAge(safeParseInt(userInput("Enter age: ")));
+					admin.setDOB(userInput("Enter date of birth: "));
+					admin.setPassword(hashUserPassword(userInput("Create secure password: ")));
+					System.out.println(admin.getPassword());
+					String updatedLine = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername()
+							+ "," + admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword().trim();
+					executeCommand(new String[] { "script/edit.sh", line_number, updatedLine });
+					System.out.println("Admin details updated successfully");
+					main(args);
+				} else if (adminChoice.equals("7")) {
 					System.out.println("Admin logged out successfully");
 					main(args);
 				} else {
