@@ -1,2 +1,3 @@
-admin,admin,admin,0,null,admin
-null,null,null,0,null,matiamukasa@gmail.com,LPT0001,false,null,false,null,0,null,null
+FirstName,LastName,Username,Age,DOB,Email,UUID,HIV_Positive,Diagnosis_Date,On_ART,Medication_Start_Date,Years_Without_Medication,Password,Country_of_Residence
+matia,mukasa,mmukasa,26,13021998,matiamukasa@gmail.com,LPT0001,true,130022024,true,13022026,2,mmukasa,UGA
+toussaint,manzi,tmanzi,23,21-21-21,toussaint,LPT0002,true,12-12-2020,false,10-02-2021,1,WZRHGrsBESr8wYFZ9sx0tPURuZgG2lmzyvWpwXPKz8U=,null
