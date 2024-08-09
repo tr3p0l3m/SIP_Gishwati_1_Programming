@@ -327,7 +327,6 @@ public class MainController {
 	}
 
 	public static String executeCommand(String scriptPath) {
-		System.out.println("Hiii " + scriptPath);
 		String output = "";
 		try {
 			Process process = Runtime.getRuntime().exec(scriptPath);
