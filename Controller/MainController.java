@@ -3,6 +3,7 @@ package Controller;
 import Model.Admin;
 import Model.Patient;
 import java.io.*;
+import java.util.Arrays;
 
 public class MainController {
 
@@ -47,7 +48,7 @@ public class MainController {
 	public static double lifeExpectancy(String country, double age, int yearsWithoutMedication) {
 		String[] countryStore;
 		country = country.trim();
-		countryStore = executeCommand(new String[] { "script/search.sh ", country, " storage/life-expectancy.csv" })
+		countryStore = executeCommand(new String[] { "script/search.sh", country, "storage/life-expectancy.csv" })
 				.split(",");
 		if (countryStore.length < 7) {
 			System.out.println("Invalid " + country + " . Please try again.");
@@ -394,6 +395,7 @@ public class MainController {
 
 		String output = "";
 		try {
+			System.out.println(Arrays.toString(commands));
 			Process process = Runtime.getRuntime().exec(commands);
 
 			// Read output from the script
