@@ -173,12 +173,12 @@ public class MainController {
 					// TODO: remember to format the export
 					executeCommand(
 							new String[] { "script/export.sh", "storage/user-store.txt", "storage/patient-data.csv" });
-					System.out.println("Patient data exported successfully!");
+					System.out.println("Patient data exported successfully to storage/patient-data.csv");
 					main(args);
 				} else if (adminChoice.equals("5")) {
 					// export patient data
 					executeCommand(new String[] { "touch", "storage/patient-analytics.csv" });
-					System.out.println("Patient data exported successfully");
+					System.out.println("Patient data exported successfully to storage/patient-analytics.csv");
 					main(args);
 				} else if (adminChoice.equals("6")) {
 					// edit admin details
