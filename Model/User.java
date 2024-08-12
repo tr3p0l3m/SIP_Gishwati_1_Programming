@@ -60,4 +60,10 @@ public class User {
 	public void setDob(String dob) {
 		this.dob = dob;
 	}
+
+	@Override
+	public String toString() {
+		return "First Name: " + first_name + "\n Last Name: " + last_name + "\n Username: " + username + "\n Age: " + age
+				+ "\n Date of Birth: " + dob;
+	}
 }

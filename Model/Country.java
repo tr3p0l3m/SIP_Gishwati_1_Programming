@@ -35,5 +35,10 @@ public class Country {
 	public void set_life_expectancy(Double life_expectancy) {
 		this.life_expectancy = life_expectancy;
 	}
+
+	@Override
+	public String toString() {
+		return "Country Name: " + name + "\n Country Code: " + code + "\n Life Expectancy: " + life_expectancy;
+	}
 	
 }

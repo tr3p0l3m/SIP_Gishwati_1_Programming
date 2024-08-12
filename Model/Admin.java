@@ -59,4 +59,10 @@ public class Admin extends User {
 	public void setPassword(String password) {
 		this.password = password;
 	}
+
+	@Override
+	public String toString() {
+		return "Admin Profile: \n First Name: " + first_name + "\n Last Name: " + last_name + "\n Username: " + username
+				+ "\n Age: " + age + "\n Date of Birth: " + dob;
+	}
 }
