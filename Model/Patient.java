@@ -102,11 +102,15 @@ public class Patient extends User {
 
 	@Override
 	public String toString() {
-		return "Patient [is_hiv_positive=" + is_hiv_positive + ", diagnosis_date=" + diagnosis_date
-				+ ", is_on_antiretroviral_therapy=" + is_on_antiretroviral_therapy + ", medication_start_date="
-				+ medication_start_date + ", years_without_medication=" + years_without_medication + ", first_name="
-				+ first_name + ", last_name=" + last_name + ", username=" + username + ", age=" + age + ", dob=" + dob
-				+ "]";
+		return this.first_name + "'s Profile \n" + "First Name: "
+				+ first_name
+				+ "\nLast Name: " + this.last_name + "\nUsername: " + this.username
+				+ "\nAge: " + this.age + "\nDate of Birth: " + this.dob + "\nEmail: "
+				+ this.email + "\nUUID: " + this.uuid + "\nHIV Positive: "
+				+ this.is_hiv_positive + "\nDiagnosis Date: " + this.diagnosis_date
+				+ "\nOn Antiretroviral Therapy: " + this.is_on_antiretroviral_therapy
+				+ "\nMedication Start Date: " + this.medication_start_date
+				+ "\nYears Without Medication: " + this.years_without_medication;
 	}
 
 }

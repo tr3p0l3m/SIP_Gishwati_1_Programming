@@ -1,6 +1,7 @@
 package Controller;
 
 import Model.Admin;
+import Model.Country;
 import Model.Patient;
 import java.io.*;
 import java.util.Arrays;
@@ -58,23 +59,10 @@ public class MainController {
 		return Math.ceil(((lifespan - age) * Math.pow(0.9, yearsWithoutMedication)));
 	}
 
-	public static String generateUUID() {
-		String prefix = "LPT";
-		String uuid = "";
-		uuid = executeCommand(new String[] { "script/wordcount.sh" });
-		if (uuid.length() < 5) {
-			int zeros = 5 - uuid.length();
-			for (int i = 0; i < zeros; i++) {
-				uuid = "0" + uuid;
-			}
-		}
-		return (prefix + uuid).trim();
-	}
-
 	public static Patient initiatePatientProfile() {
 		Patient patient = new Patient(null, null, null, 0, null, null, null, false, null, false, null, 0, null, null);
 		patient.set_email(userInput("Enter patient's email: "));
-		patient.set_uuid(generateUUID());
+		patient.set_uuid(executeCommand(new String[] {"script/uuidgen.sh"}).trim());
 
 		String patientDetails = patient.getFirstName() + "," + patient.getLastName() + "," + patient.getUsername() + ","
 				+ patient.getAge() + "," + patient.getDob() + "," + patient.get_email() + "," + patient.get_uuid() + ","
@@ -96,8 +84,9 @@ public class MainController {
 		patient.setLastName(userInput("Enter last name: "));
 		patient.setUsername(userInput("Enter username: "));
 		patient.setAge(safeParseInt(userInput("Enter age: ")));
-		patient.setDob(userInput("Enter date of birth: "));
-		patient.set_country_of_residence(getPatientCountryISO(userInput("Enter country of residence: ")));
+		patient.setDob(userInput("Enter date of birth (DD-MM-YYYY): "));
+		Country country = getCountryDetails(userInput("Enter country of residence: "));
+		patient.set_country_of_residence(country.get_code());
 		patient.set_password(hashUserPassword(userInput("Create secure password: "))); // Prompt for the password
 
 		// tell patient that the next steps are optional and can be completed later. ask
@@ -225,15 +214,7 @@ public class MainController {
 					double lifeExpectancy = lifeExpectancy(patient.get_country_of_residence(),
 							(double) patient.getAge(), patient.get_years_without_medication());
 					// output patient profile with nice formatting
-					System.out.println(patient.getFirstName() + "'s Profile \n" + "First Name: "
-							+ patient.getFirstName()
-							+ "\nLast Name: " + patient.getLastName() + "\nUsername: " + patient.getUsername()
-							+ "\nAge: " + patient.getAge() + "\nDate of Birth: " + patient.getDob() + "\nEmail: "
-							+ patient.get_email() + "\nUUID: " + patient.get_uuid() + "\nHIV Positive: "
-							+ patient.is_hiv_positive() + "\nDiagnosis Date: " + patient.get_diagnosis_date()
-							+ "\nOn Antiretroviral Therapy: " + patient.is_on_antiretroviral_therapy()
-							+ "\nMedication Start Date: " + patient.get_medication_start_date()
-							+ "\nYears Without Medication: " + patient.get_years_without_medication()
+					System.out.println(patient
 							+ "\nLife Expectancy: " + lifeExpectancy);
 
 					userInput("Press Enter to logout");
@@ -375,15 +356,15 @@ public class MainController {
 		return admin;
 	}
 
-	public static String getPatientCountryISO(String country) {
+	public static Country getCountryDetails(String country) {
 		country = country.substring(0, 1).toUpperCase() + country.substring(1); // Capitalize the first letter
 		String[] commands = { "script/search.sh", country.trim(), "storage/life-expectancy.csv" };
-		String[] countryStore = executeCommand(commands).split(",");
-		if (countryStore.length < 7) {
+		String[] countryStore = executeCommand(commands).split(":");
+		if (countryStore.length < 2) {
 			System.out.println("Invalid " + country + " . Please try again.");
-			return null;
 		}
-		return countryStore[5];
+		String[] countryDetails = countryStore[1].split(",");
+		return new Country(countryDetails[0], countryDetails[5], Double.parseDouble(countryDetails[6]));
 	}
 
 	public static String hashUserPassword(String password) {
@@ -395,7 +376,6 @@ public class MainController {
 
 		String output = "";
 		try {
-			System.out.println(Arrays.toString(commands));
 			Process process = Runtime.getRuntime().exec(commands);
 
 			// Read output from the script
