@@ -4,6 +4,11 @@ import Model.Admin;
 import Model.Country;
 import Model.Patient;
 import java.io.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.regex.*;
+import java.util.*;
 
 public class MainController {
 
@@ -11,13 +16,13 @@ public class MainController {
 		File file = new File("storage/user-store.txt");
 		if (!file.exists()) {
 			System.out.println("Welcome to Life Prognosis App! Initializing application...");
-			String choice = userInput("Would you like to create a custom admin account? (Y/N): ");
+			String choice = userInput("Would you like to create a custom admin account? (Y/N): ", "none", 0, 0, 0);
 			Admin admin = null;
 			if (choice.equalsIgnoreCase("Y")) {
-				String firstName = userInput("Enter first name: ");
-				String lastName = userInput("Enter last name: ");
-				int age = safeParseInt(userInput("Enter age: "));
-				String dob = userInput("Enter date of birth: ");
+				String firstName = userInput("Enter your first name: ", "none", 30, 0, 0);
+				String lastName = userInput("Enter your last name: ", "none", 30, 0, 0);
+				String dob = userInput("Enter date of birth (DD-MM-YYYY): ", "date", 0, 0, 0);
+				int age = ageCalculator(dob);
 				String password = hashUserPassword(passwordInput(true));
 				admin = new Admin(firstName, lastName, "admin", age, dob, password.trim());
 			} else {
@@ -33,7 +38,7 @@ public class MainController {
 		}
 	}
 
-	public static String userInput(String message) {
+	public static String userInput(String message, String type, int length, int min, int max) {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println(message);
 		String input = null;
@@ -41,6 +46,79 @@ public class MainController {
 			input = reader.readLine();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+
+		if (length > 0 && input.length() > length) {
+			System.out.println("Invalid length input. Please try again.");
+			return userInput(message, type, length, min, max);
+		}
+
+		// check if input is within range
+		if ((type == "number") && (min > 0 || max > 0) && (safeParseInt(input) < min || safeParseInt(input) > max)) {
+			System.out.println("Invalid range input. Please try again.");
+			return userInput(message, type, length, min, max);
+		}
+		// validate input based on type
+		switch (type) {
+			case "date":
+				// validate date
+				Date date = null;
+				String inputDate = input;
+				try {
+					DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+					formatter.setLenient(false);
+					date = formatter.parse(inputDate);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				} finally {
+					if (date == null) {
+						System.out.println("Invalid date. Please try again.");
+						return userInput(message, type, length, min, max);
+					}
+				}
+
+				input = new SimpleDateFormat("dd-MM-yyyy").format(date);
+
+				break;
+			case "email":
+				// validate email
+				Pattern emailPattern = Pattern
+						.compile("^[a-zA-Z0-9].[a-zA-Z0-9\\._%\\+\\-]{0,63}@[a-zA-Z0-9\\.\\-]+\\.[a-zA-Z]{2,30}$");
+				Matcher emailMatcher = emailPattern.matcher(input);
+				if (!emailMatcher.matches()) {
+					System.out.println("Invalid email. Please try again.");
+					return userInput(message, type, length, min, max);
+				}
+				// check if it already exists
+				String[] userStore = executeCommand(
+						new String[] { "script/search.sh", input, "storage/user-store.txt" }).split(":");
+				if (userStore.length > 1) {
+					System.out.println("Email already exists. Please try again.");
+					return userInput(message, type, length, min, max);
+				}
+				break;
+			case "username":
+				// validate username
+				Pattern usernamePattern = Pattern.compile("^[a-zA-Z0-9._%+-]{3,}$");
+				Matcher usernameMatcher = usernamePattern.matcher(input);
+				if (!usernameMatcher.matches()) {
+					System.out.println("Invalid username. Please try again.");
+					return userInput(message, type, length, min, max);
+				}
+				// check if it already exists
+				String[] userStore2 = executeCommand(
+						new String[] { "script/search.sh", input, "storage/user-store.txt" }).split(":");
+				if (userStore2.length > 1) {
+					System.out.println("Username already exists. Please try again.");
+					return userInput(message, type, length, min, max);
+				}
+				break;
+
+			case "none":
+				break;
+
+			default:
+				break;
 		}
 		return input;
 	}
@@ -60,7 +138,7 @@ public class MainController {
 
 	public static Patient initiatePatientProfile() {
 		Patient patient = new Patient(null, null, null, 0, null, null, null, false, null, false, null, 0, null, null);
-		patient.set_email(userInput("Enter patient's email: "));
+		patient.set_email(userInput("Enter patient's email: ", "email", 0, 0, 0));
 		patient.set_uuid(executeCommand(new String[] { "script/uuidgen.sh" }).trim());
 
 		String patientDetails = patient.getFirstName() + "," + patient.getLastName() + "," + patient.getUsername() + ","
@@ -79,30 +157,32 @@ public class MainController {
 
 	public static Patient completePatientProfile(Patient patient, int line_number) {
 		// Prompt for personal details only
-		patient.setFirstName(userInput("Enter first name: "));
-		patient.setLastName(userInput("Enter last name: "));
-		patient.setUsername(userInput("Enter username: "));
-		patient.setAge(safeParseInt(userInput("Enter age: ")));
-		patient.setDob(userInput("Enter date of birth (DD-MM-YYYY): "));
-		Country country = getCountryDetails(userInput("Enter country of residence: "));
+		patient.setFirstName(userInput("Enter first name: ", "none", 30, 0, 0));
+		patient.setLastName(userInput("Enter last name: ", "none", 30, 0, 0));
+		patient.setUsername(userInput("Enter username: ", "username", 30, 0, 0));
+		patient.setDob(userInput("Enter date of birth (DD-MM-YYYY): ", "date", 0, 0, 0));
+		patient.setAge(ageCalculator(patient.getDob()));
+		Country country = getCountryDetails(userInput("Enter country of residence: ", "none", 0, 0, 0));
 		patient.set_country_of_residence(country.get_code());
 		patient.set_password(hashUserPassword(passwordInput(true))); // Prompt for the password
 
 		// tell patient that the next steps are optional and can be completed later. ask
 		// if they want to continue
 		String optional = userInput(
-				"The next steps are optional and can be completed later. Do you want to continue? (Y/N): ");
+				"The next steps are optional and can be completed later. Do you want to continue? (Y/N): ", "none", 0, 0, 0);
 		if (optional.equalsIgnoreCase("Y")) {
 			// Prompt for medical details
-			patient.set_hiv_positive(Boolean.parseBoolean(userInput("Are you HIV positive? (true/false): ")));
+			patient.set_hiv_positive(Boolean.parseBoolean(userInput("Are you HIV positive? (true/false): ", "none", 0, 0, 0)));
 			if (patient.is_hiv_positive()) {
-				patient.set_diagnosis_date(userInput("Enter diagnosis date: "));
+				patient.set_diagnosis_date(userInput("Enter diagnosis date (DD-MM-YYYY): ", "date", 0, 0, 0));
 				patient.set_on_antiretroviral_therapy(
-						Boolean.parseBoolean(userInput("Are you on antiretroviral therapy? (true/false): ")));
+						Boolean.parseBoolean(userInput("Are you on antiretroviral therapy? (true/false): ", "none", 0, 0, 0)));
 				if (patient.is_on_antiretroviral_therapy()) {
-					patient.set_medication_start_date(userInput("Enter medication start date: "));
+					patient.set_medication_start_date(userInput("Enter medication start date (DD-MM-YYYY): ", "date", 0, 0, 0));
+					patient.set_years_without_medication(yearsWithoutMedication(patient.get_diagnosis_date(),
+							patient.get_medication_start_date()));
 				} else {
-					patient.set_years_without_medication(safeParseInt(userInput("Enter years without medication: ")));
+					patient.set_years_without_medication(0);
 				}
 			}
 		}
@@ -130,15 +210,15 @@ public class MainController {
 	public static void main(String[] args) {
 		checkStorage();
 		// Ask user to Login or Complete Profile
-		String choice = userInput("Please choose: \n1.Login \n2.Complete Profile \n3.Quit: ");
+		String choice = userInput("Please choose: \n1.Login \n2.Complete Profile \n3.Quit: ", "number", 0, 1, 3);
 		if (choice.equals("1")) {
 			// login and continue if successful but retry if failed
-			String username = userInput("Enter username: ");
-			String password = userInput("Enter password: ");
+			String username = userInput("Enter username: ", "none", 0, 0, 0);
+			String password = passwordInput(false);
 			while (!login(username, password)) {
 				System.out.println("Login failed. Please try again.");
-				username = userInput("Enter username: ");
-				password = userInput("Enter password: ");
+				username = userInput("Enter username: ", "none", 0, 0, 0);
+				password = passwordInput(false);
 			}
 
 			if (username.equals("admin")) {
@@ -146,22 +226,22 @@ public class MainController {
 				// ask admin to create a new patient profile, update patient profile or export
 				// patient data
 				String adminChoice = userInput(
-						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Delete Patient Profile \n4.Export patient data \n5.Export patient analytics \n6.Edit Admin Details \n7.Logout ");
+						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Delete Patient Profile \n4.Export patient data \n5.Export patient analytics \n6.Edit Admin Details \n7.Logout ", "number", 0, 1, 7);
 				if (adminChoice.equals("1")) {
 					initiatePatientProfile();
 					System.out.println("Patient profile created successfully");
 					main(args);
 				} else if (adminChoice.equals("2")) {
-					String patient_uuid = userInput("Enter patient uuid: ");
+					String patient_uuid = userInput("Enter patient uuid: ", "none", 0, 0, 0);
 					Patient patient = getPatientDetails(patient_uuid);
 					// update patient email
-					String updatedEmail = userInput("Enter new email: ").trim();
+					String updatedEmail = userInput("Enter new email: ", "email", 0, 0, 0).trim();
 					// replace the email in the user-store.txt with the updated email
 					executeCommand(new String[] { "script/edit-email.sh", patient.get_email(), updatedEmail });
 					System.out.println("Patient profile updated successfully");
 					main(args);
 				} else if (adminChoice.equals("3")) {
-					String uuid = userInput("Enter UUID: ");
+					String uuid = userInput("Enter UUID: ", "none", 0, 0, 0);
 					String line_number = executeCommand(
 							new String[] { "script/search.sh", uuid, "storage/user-store.txt" }).split(":")[0];
 					executeCommand(new String[] { "script/delete.sh", line_number });
@@ -185,10 +265,10 @@ public class MainController {
 							new String[] { "script/search.sh", "admin", "storage/user-store.txt" })
 							.split(":")[0];
 					Admin admin = getAdminDetails("admin");
-					admin.setFirstName(userInput("Enter first name: "));
-					admin.setLastName(userInput("Enter last name: "));
-					admin.setAge(safeParseInt(userInput("Enter age: ")));
-					admin.setDOB(userInput("Enter date of birth: "));
+					admin.setFirstName(userInput("Enter first name: ", "none", 30, 0, 0));
+					admin.setLastName(userInput("Enter last name: ", "none", 30, 0, 0));
+					admin.setDOB(userInput("Enter date of birth (DD-MM-YYYY): ", "date", 0, 0, 0));
+					admin.setAge(ageCalculator(admin.getDOB()));
 					admin.setPassword(hashUserPassword(passwordInput(true)));
 					System.out.println(admin.getPassword());
 					String updatedLine = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername()
@@ -209,7 +289,7 @@ public class MainController {
 				// Ask patient to view their profile, update their profile or delete their
 				// profile
 				String patientChoice = userInput(
-						"Please choose: \n1.View patient profile \n2.Update patient profile \n3.Delete patient profile \n4.Logout ");
+						"Please choose: \n1.View patient profile \n2.Update patient profile \n3.Delete patient profile \n4.Logout ", "number", 0, 1, 4);
 				if (patientChoice.equals("1")) {
 					double lifeExpectancy = lifeExpectancy(patient.get_country_of_residence(),
 							(double) patient.getAge(), patient.get_years_without_medication());
@@ -217,7 +297,7 @@ public class MainController {
 					System.out.println(patient
 							+ "\nLife Expectancy: " + lifeExpectancy);
 
-					userInput("Press Enter to logout");
+					userInput("Press Enter to logout", "none", 0, 0, 0);
 					main(args);
 				} else if (patientChoice.equals("2")) {
 					String uuid = patient.get_uuid();
@@ -244,7 +324,7 @@ public class MainController {
 				}
 			}
 		} else if (choice.equals("2")) {
-			String uuid = userInput("Enter UUID: ");
+			String uuid = userInput("Enter UUID: ", "none", 0, 0, 0);
 			String[] commands = { "script/search.sh", uuid, "storage/user-store.txt" };
 			String[] userStore = executeCommand(commands).split(":");
 			if (userStore.length < 2) {
@@ -431,5 +511,29 @@ public class MainController {
 		password = new String(passwordArray);
 
 		return password;
+	}
+
+	public static int ageCalculator(String dob) {
+		// calculate age
+		DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+		Date date = null;
+		try {
+			date = formatter.parse(dob);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		Date currentDate = new Date();
+		long diff = currentDate.getTime() - date.getTime();
+		long diffDays = diff / (24 * 60 * 60 * 1000);
+		long diffYears = diffDays / 365;
+		System.out.println("Age: " + diffYears);
+		return (int) diffYears;
+	}
+
+	public static int yearsWithoutMedication(String diagnosisDate, String medicationStartDate) {
+		// get difference between medication start date and diagnosis date
+		int yearsWithoutMedication = safeParseInt(medicationStartDate.substring(6, 10))
+				- safeParseInt(diagnosisDate.substring(6, 10));
+		return yearsWithoutMedication;
 	}
 }
