@@ -4,7 +4,6 @@ import Model.Admin;
 import Model.Country;
 import Model.Patient;
 import java.io.*;
-import java.util.Arrays;
 
 public class MainController {
 
@@ -19,7 +18,7 @@ public class MainController {
 				String lastName = userInput("Enter last name: ");
 				int age = safeParseInt(userInput("Enter age: "));
 				String dob = userInput("Enter date of birth: ");
-				String password = hashUserPassword(userInput("Create secure password: "));
+				String password = hashUserPassword(passwordInput(true));
 				admin = new Admin(firstName, lastName, "admin", age, dob, password.trim());
 			} else {
 				String password = hashUserPassword("admin");
@@ -27,7 +26,7 @@ public class MainController {
 			}
 			String adminDetails = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername() + ","
 					+ admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword().trim();
-			executeCommand(new String[] { "script/insert.sh", adminDetails});
+			executeCommand(new String[] { "script/insert.sh", adminDetails });
 			System.out.println("Initialization complete");
 		} else {
 			System.out.println("Welcome to Life Prognosis App!");
@@ -62,7 +61,7 @@ public class MainController {
 	public static Patient initiatePatientProfile() {
 		Patient patient = new Patient(null, null, null, 0, null, null, null, false, null, false, null, 0, null, null);
 		patient.set_email(userInput("Enter patient's email: "));
-		patient.set_uuid(executeCommand(new String[] {"script/uuidgen.sh"}).trim());
+		patient.set_uuid(executeCommand(new String[] { "script/uuidgen.sh" }).trim());
 
 		String patientDetails = patient.getFirstName() + "," + patient.getLastName() + "," + patient.getUsername() + ","
 				+ patient.getAge() + "," + patient.getDob() + "," + patient.get_email() + "," + patient.get_uuid() + ","
@@ -87,7 +86,7 @@ public class MainController {
 		patient.setDob(userInput("Enter date of birth (DD-MM-YYYY): "));
 		Country country = getCountryDetails(userInput("Enter country of residence: "));
 		patient.set_country_of_residence(country.get_code());
-		patient.set_password(hashUserPassword(userInput("Create secure password: "))); // Prompt for the password
+		patient.set_password(hashUserPassword(passwordInput(true))); // Prompt for the password
 
 		// tell patient that the next steps are optional and can be completed later. ask
 		// if they want to continue
@@ -182,14 +181,15 @@ public class MainController {
 					main(args);
 				} else if (adminChoice.equals("6")) {
 					// edit admin details
-					String line_number = executeCommand(new String[] { "script/search.sh", "admin", "storage/user-store.txt" })
+					String line_number = executeCommand(
+							new String[] { "script/search.sh", "admin", "storage/user-store.txt" })
 							.split(":")[0];
 					Admin admin = getAdminDetails("admin");
 					admin.setFirstName(userInput("Enter first name: "));
 					admin.setLastName(userInput("Enter last name: "));
 					admin.setAge(safeParseInt(userInput("Enter age: ")));
 					admin.setDOB(userInput("Enter date of birth: "));
-					admin.setPassword(hashUserPassword(userInput("Create secure password: ")));
+					admin.setPassword(hashUserPassword(passwordInput(true)));
 					System.out.println(admin.getPassword());
 					String updatedLine = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername()
 							+ "," + admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword().trim();
@@ -394,5 +394,42 @@ public class MainController {
 		}
 
 		return output;
+	}
+
+	public static String passwordInput(boolean confirm) {
+		Console console = System.console();
+		if (console == null) {
+			System.out.println("Couldn't get Console instance");
+			System.exit(0);
+		}
+
+		char[] passwordArray = null;
+		String password = null;
+
+		while (confirm) {
+			// confirm password
+			passwordArray = console.readPassword("Enter your secret password: ");
+			char[] confirmPasswordArray = console.readPassword("Confirm your secret password: ");
+
+			if (passwordArray.length != confirmPasswordArray.length) {
+				console.printf("Passwords do not match%n");
+				continue;
+			}
+
+			password = new String(passwordArray);
+			String confirmPassword = new String(confirmPasswordArray);
+
+			if (password.equals(confirmPassword)) {
+				console.printf("Passwords match%n");
+				return password;
+			} else {
+				console.printf("Passwords do not match%n");
+			}
+		}
+
+		passwordArray = console.readPassword("Enter your secret password: ");
+		password = new String(passwordArray);
+
+		return password;
 	}
 }
