@@ -190,8 +190,6 @@ public class MainController {
 			}
 		}
 
-		// TODO: confirm password
-
 		// Construct the new line with updated details
 		String updatedLine = patient.getFirstName() + "," + patient.getLastName() + "," + patient.getUsername() + ","
 				+ patient.getAge() + "," + patient.getDob() + "," + patient.get_email() + "," + patient.get_uuid() + ","
@@ -268,7 +266,6 @@ public class MainController {
 					main(args);
 				} else if (adminChoice.equals("4")) {
 					// export patient data
-					// TODO: remember to format the export
 					executeCommand(
 							new String[] { "script/export.sh", "storage/user-store.txt", "storage/patient-data.csv" });
 					System.out.println("Patient data exported successfully to storage/patient-data.csv");
@@ -284,16 +281,7 @@ public class MainController {
 							new String[] { "script/search.sh", "admin", "storage/user-store.txt" })
 							.split(":")[0];
 					Admin admin = getAdminDetails("admin");
-					admin.setFirstName(userInput("Enter first name: ", "none", 30, 0, 0));
-					admin.setLastName(userInput("Enter last name: ", "none", 30, 0, 0));
-					admin.setDOB(userInput("Enter date of birth (DD-MM-YYYY): ", "date", 0, 0, 0));
-					admin.setAge(ageCalculator(admin.getDOB()));
-					admin.setPassword(hashUserPassword(passwordInput(true)));
-					System.out.println(admin.getPassword());
-					String updatedLine = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername()
-							+ "," + admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword().trim();
-					executeCommand(new String[] { "script/edit.sh", line_number, updatedLine });
-					System.out.println("Admin details updated successfully");
+					updateAdminProfile(admin, safeParseInt(line_number));
 					main(args);
 				} else if (adminChoice.equals("7")) {
 					System.out.println("Admin logged out successfully");
@@ -487,6 +475,12 @@ public class MainController {
 			while ((line = reader.readLine()) != null) {
 				output = line + "\n";
 			}
+
+			// Close the reader
+			reader.close();
+
+			// destroy the process
+			process.destroy();
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 			return null;
@@ -811,8 +805,6 @@ public class MainController {
 					break;
 			}
 		}
-		
-		// TODO: confirm password
 
 		// Construct the new line with updated details
 		String updatedLine = patient.getFirstName() + "," + patient.getLastName() + "," + patient.getUsername() + ","
@@ -832,5 +824,49 @@ public class MainController {
 		// Notify the user that the profile has been completed
 		System.out.println("Profile completed successfully. Please log in with your credentials.");
 		return patient;
+	}
+	
+	public static Admin updateAdminProfile(Admin admin, int line_number) {
+		System.out.println("Choose the field you want to update: ");
+		System.out.println(
+				"1. First Name \n2. Last Name \n3. Date of Birth \n4. Password \n5. Exit");
+		String choice = "";
+
+		while (true) {
+			choice = userInput("Choose an option (1-5): ", "number", 0, 1, 5);
+			if (choice.equals("5")) {
+				break;
+			}
+			switch (choice) {
+				case "1":
+					admin.setFirstName(userInput("Enter first name: ", "none", 30, 0, 0));
+					break;
+				case "2":
+					admin.setLastName(userInput("Enter last name: ", "none", 30, 0, 0));
+					break;
+				case "3":
+					admin.setDOB(userInput("Enter date of birth (DD-MM-YYYY): ", "date", 0, 0, 0));
+					admin.setAge(ageCalculator(admin.getDOB()));
+					break;
+				case "4":
+					admin.setPassword(hashUserPassword(passwordInput(true)));
+					break;
+				default:
+					break;
+			}
+		}
+
+		// Construct the new line with updated details
+		String updatedLine = admin.getFirstName() + "," + admin.getLastName() + "," + admin.getUsername() + ","
+				+ admin.getAge() + "," + admin.getDOB() + "," + admin.getPassword().trim();
+
+		updatedLine = updatedLine.trim();
+
+		// Update the user's line in the user-store.txt file
+		executeCommand(new String[] { "script/edit.sh", Integer.toString(line_number), updatedLine });
+
+		// Notify the user that the profile has been completed
+		System.out.println("Admin Profile completed successfully. Please log in with your credentials.");
+		return admin;
 	}
 }
