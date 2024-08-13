@@ -137,7 +137,8 @@ public class MainController {
 	}
 
 	public static Patient initiatePatientProfile() {
-		Patient patient = new Patient(null, null, null, 0, null, null, null, false, null, false, null, 0, null, null);
+		Patient patient = new Patient(null, null, null, 0, null, null, null, false, null, false, null, 0, null, null,
+				0);
 		patient.set_email(userInput("Enter patient's email: ", "email", 0, 0, 0));
 		patient.set_uuid(executeCommand(new String[] { "script/uuidgen.sh" }).trim());
 
@@ -146,7 +147,8 @@ public class MainController {
 				+ patient.is_hiv_positive() + "," + patient.get_diagnosis_date() + ","
 				+ patient.is_on_antiretroviral_therapy() + ","
 				+ patient.get_medication_start_date() + "," + patient.get_years_without_medication() + ","
-				+ patient.get_password() + "," + patient.get_country_of_residence();
+				+ patient.get_password() + "," + patient.get_country_of_residence() + ","
+				+ patient.get_life_expectancy();
 
 		// Save the new patient profile (email, UUID) to user-store.txt
 		executeCommand(new String[] { "script/insert.sh", patientDetails });
@@ -169,16 +171,20 @@ public class MainController {
 		// tell patient that the next steps are optional and can be completed later. ask
 		// if they want to continue
 		String optional = userInput(
-				"The next steps are optional and can be completed later. Do you want to continue? (Y/N): ", "none", 0, 0, 0);
+				"The next steps are optional and can be completed later. Do you want to continue? (Y/N): ", "none", 0,
+				0, 0);
 		if (optional.equalsIgnoreCase("Y")) {
 			// Prompt for medical details
-			patient.set_hiv_positive(Boolean.parseBoolean(userInput("Are you HIV positive? (true/false): ", "none", 0, 0, 0)));
+			patient.set_hiv_positive(
+					Boolean.parseBoolean(userInput("Are you HIV positive? (true/false): ", "none", 0, 0, 0)));
 			if (patient.is_hiv_positive()) {
 				patient.set_diagnosis_date(userInput("Enter diagnosis date (DD-MM-YYYY): ", "date", 0, 0, 0));
 				patient.set_on_antiretroviral_therapy(
-						Boolean.parseBoolean(userInput("Are you on antiretroviral therapy? (true/false): ", "none", 0, 0, 0)));
+						Boolean.parseBoolean(
+								userInput("Are you on antiretroviral therapy? (true/false): ", "none", 0, 0, 0)));
 				if (patient.is_on_antiretroviral_therapy()) {
-					patient.set_medication_start_date(userInput("Enter medication start date (DD-MM-YYYY): ", "date", 0, 0, 0));
+					patient.set_medication_start_date(
+							userInput("Enter medication start date (DD-MM-YYYY): ", "date", 0, 0, 0));
 					patient.set_years_without_medication(yearsWithoutMedication(patient.get_diagnosis_date(),
 							patient.get_medication_start_date()));
 				} else {
@@ -195,7 +201,9 @@ public class MainController {
 				+ patient.is_hiv_positive() + "," + patient.get_diagnosis_date() + ","
 				+ patient.is_on_antiretroviral_therapy() + ","
 				+ patient.get_medication_start_date() + "," + patient.get_years_without_medication() + ","
-				+ patient.get_password() + "," + patient.get_country_of_residence();
+				+ patient.get_password() + "," + patient.get_country_of_residence() + ","
+				+ lifeExpectancy(patient.get_country_of_residence(), patient.getAge(), 
+						patient.get_years_without_medication());
 
 		updatedLine = updatedLine.replace("/", "-");
 
@@ -226,7 +234,8 @@ public class MainController {
 				// ask admin to create a new patient profile, update patient profile or export
 				// patient data
 				String adminChoice = userInput(
-						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Delete Patient Profile \n4.Export patient data \n5.Export patient analytics \n6.Edit Admin Details \n7.Logout ", "number", 0, 1, 7);
+						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Delete Patient Profile \n4.Export patient data \n5.Export patient analytics \n6.Edit Admin Details \n7.Logout ",
+						"number", 0, 1, 7);
 				if (adminChoice.equals("1")) {
 					initiatePatientProfile();
 					System.out.println("Patient profile created successfully");
@@ -256,7 +265,7 @@ public class MainController {
 					main(args);
 				} else if (adminChoice.equals("5")) {
 					// export patient data
-					executeCommand(new String[] { "touch", "storage/patient-analytics.csv" });
+					exportPatientAnalytics();
 					System.out.println("Patient data exported successfully to storage/patient-analytics.csv");
 					main(args);
 				} else if (adminChoice.equals("6")) {
@@ -289,7 +298,8 @@ public class MainController {
 				// Ask patient to view their profile, update their profile or delete their
 				// profile
 				String patientChoice = userInput(
-						"Please choose: \n1.View patient profile \n2.Update patient profile \n3.Delete patient profile \n4.Logout ", "number", 0, 1, 4);
+						"Please choose: \n1.View patient profile \n2.Update patient profile \n3.Delete patient profile \n4.Logout ",
+						"number", 0, 1, 4);
 				if (patientChoice.equals("1")) {
 					double lifeExpectancy = lifeExpectancy(patient.get_country_of_residence(),
 							(double) patient.getAge(), patient.get_years_without_medication());
@@ -339,7 +349,7 @@ public class MainController {
 					userDetails[4], userDetails[5], userDetails[6], Boolean.parseBoolean(userDetails[7]),
 					userDetails[8],
 					Boolean.parseBoolean(userDetails[9]), userDetails[10], safeParseInt(userDetails[11]),
-					userDetails[12], userDetails[13]);
+					userDetails[12], userDetails[13], safeParseInt(userDetails[14]));
 			// if username and password are set, then the profile is complete
 			if (patient.getFirstName() != null && patient.getLastName() != null && patient.getUsername() != null
 					&& patient.getAge() != 0 && patient.getDob() != null && patient.get_password() != null) {
@@ -418,7 +428,7 @@ public class MainController {
 		Patient patient = new Patient(userDetails[0], userDetails[1], userDetails[2], safeParseInt(userDetails[3]),
 				userDetails[4], userDetails[5], userDetails[6], Boolean.parseBoolean(userDetails[7]), userDetails[8],
 				Boolean.parseBoolean(userDetails[9]), userDetails[10], safeParseInt(userDetails[11]),
-				userDetails[12], userDetails[13]);
+				userDetails[12], userDetails[13], safeParseInt(userDetails[14]));
 		return patient;
 	}
 
@@ -535,5 +545,207 @@ public class MainController {
 		int yearsWithoutMedication = safeParseInt(medicationStartDate.substring(6, 10))
 				- safeParseInt(diagnosisDate.substring(6, 10));
 		return yearsWithoutMedication;
+	}
+
+	public static List<Patient> getAllPatients() {
+		List<Patient> patients = new ArrayList<>();
+		String filePath = "storage/user-store.txt"; // Path to the file
+
+		try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+			String line;
+			int i = 0;
+			while ((line = br.readLine()) != null) {
+				if (i == 0) {
+					i++;
+					continue;
+				}
+				String[] patientDetails = line.split(",");
+				int life_expectancy = (int) lifeExpectancy(patientDetails[13], Integer.parseInt(patientDetails[3]),
+						Integer.parseInt(patientDetails[11]));
+				patients.add(new Patient(patientDetails[0], patientDetails[1], patientDetails[2],
+						Integer.parseInt(patientDetails[3]), patientDetails[4], patientDetails[5], patientDetails[6],
+						Boolean.parseBoolean(patientDetails[7]), patientDetails[8],
+						Boolean.parseBoolean(patientDetails[9]), patientDetails[10],
+						Integer.parseInt(patientDetails[11]), patientDetails[12], patientDetails[13], life_expectancy));
+				i++;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return patients;
+	}
+
+	public static int getAvergageAge(List<Patient> patients) {
+		int totalAge = 0;
+		for (Patient patient : patients) {
+			totalAge += patient.getAge();
+		}
+		return totalAge / patients.size();
+	}
+
+	// get median age for all patients
+	public static int getMedianAge(List<Patient> patients) {
+		int medianAge = 0;
+		List<Integer> ages = new ArrayList<>();
+		for (Patient patient : patients) {
+			ages.add(patient.getAge());
+		}
+		Collections.sort(ages);
+		if (ages.size() % 2 == 0) {
+			medianAge = (ages.get(ages.size() / 2) + ages.get(ages.size() / 2 - 1)) / 2;
+		} else {
+			medianAge = ages.get(ages.size() / 2);
+		}
+		return medianAge;
+	}
+
+	// get the 25th, 50th and 75th percentile of the ages of all patients
+	public static int getPercentiles(List<Patient> patients, String percentile) {
+		List<Integer> ages = new ArrayList<>();
+		for (Patient patient : patients) {
+			ages.add(patient.getAge());
+		}
+		Collections.sort(ages);
+
+		int percentile25 = ages.get((int) Math.floor(0.25 * ages.size()));
+		int percentile50 = ages.get((int) Math.floor(0.50 * ages.size()));
+		int percentile75 = ages.get((int) Math.floor(0.75 * ages.size()));
+
+		if (percentile == "25th") {
+			return percentile25;
+		} else if (percentile == "50th") {
+			return percentile50;
+		} else if (percentile == "75th") {
+			return percentile75;
+		} else {
+			return 0;
+		}
+	}
+
+	// function to get average life expectancy of all patients
+	public static double getAverageLifeExpectancy(List<Patient> patients) {
+		double totalLifeExpectancy = 0;
+		for (Patient patient : patients) {
+			totalLifeExpectancy += patient.get_life_expectancy();
+		}
+		return totalLifeExpectancy / patients.size();
+	}
+
+	// function to get the median life expectancy of all patients
+	public static int getMedianLifeExpectancy(List<Patient> patients) {
+		int medianLifeExpectancy = 0;
+		List<Integer> lifeExpectancies = new ArrayList<>();
+		for (Patient patient : patients) {
+			lifeExpectancies.add(patient.get_life_expectancy());
+		}
+		Collections.sort(lifeExpectancies);
+		if (lifeExpectancies.size() % 2 == 0) {
+			medianLifeExpectancy = (lifeExpectancies.get(lifeExpectancies.size() / 2)
+					+ lifeExpectancies.get(lifeExpectancies.size() / 2 - 1)) / 2;
+		} else {
+			medianLifeExpectancy = lifeExpectancies.get(lifeExpectancies.size() / 2);
+		}
+		return medianLifeExpectancy;
+	}
+
+	// function to get the 25th, 50th and 75th percentile of the life expectancies
+	// of all patients
+	public static int getPercentilesLifeExpectancy(List<Patient> patients, String percentile) {
+		List<Integer> lifeExpectancies = new ArrayList<>();
+		for (Patient patient : patients) {
+			lifeExpectancies.add(patient.get_life_expectancy());
+		}
+		Collections.sort(lifeExpectancies);
+
+		int percentile25 = lifeExpectancies.get((int) Math.floor(0.25 * lifeExpectancies.size()));
+		int percentile50 = lifeExpectancies.get((int) Math.floor(0.50 * lifeExpectancies.size()));
+		int percentile75 = lifeExpectancies.get((int) Math.floor(0.75 * lifeExpectancies.size()));
+
+		if (percentile == "25th") {
+			return percentile25;
+		} else if (percentile == "50th") {
+			return percentile50;
+		} else if (percentile == "75th") {
+			return percentile75;
+		} else {
+			return 0;
+		}
+	}
+
+	// function to write patient statistics to a file
+	public static void patientStats(List<Patient> patients) {
+		executeCommand(new String[] { "rm", "storage/patient-analytics.csv" });
+		executeCommand(new String[] { "script/insert2.sh", "Patient Statistics", "storage/patient-analytics.csv" });
+		executeCommand(
+				new String[] { "script/insert2.sh", "Statistic,Life Expectancy,Age", "storage/patient-analytics.csv" });
+		executeCommand(new String[] { "script/insert2.sh",
+				"Average," + getAverageLifeExpectancy(patients) + "," + getAvergageAge(patients),
+				"storage/patient-analytics.csv" });
+		executeCommand(new String[] { "script/insert2.sh",
+				"Median," + getMedianLifeExpectancy(patients) + "," + getMedianAge(patients),
+				"storage/patient-analytics.csv" });
+		executeCommand(new String[] { "script/insert2.sh",
+				"25th Percentile," + getPercentilesLifeExpectancy(patients, "25th") + ","
+						+ getPercentiles(patients, "25th"),
+				"storage/patient-analytics.csv" });
+		executeCommand(new String[] { "script/insert2.sh",
+				"50th Percentile," + getPercentilesLifeExpectancy(patients, "50th") + ","
+						+ getPercentiles(patients, "50th"),
+				"storage/patient-analytics.csv" });
+		executeCommand(new String[] { "script/insert2.sh",
+				"75th Percentile," + getPercentilesLifeExpectancy(patients, "75th") + ","
+						+ getPercentiles(patients, "75th"),
+				"storage/patient-analytics.csv" });
+	}
+
+	// function that creates a number of patients and writes them to user-store.txt
+	public static void createPatients(int numPatients) {
+		for (int i = 0; i < numPatients; i++) {
+			String fake_first_name = randomString(6);
+			String fake_last_name = randomString(6);
+			String fake_username = randomString(6);
+			int fake_age = (int) Math.floor(Math.random() * 100);
+			String fake_dob = "01/01/2000";
+			String fake_email = randomString(6) + "@gmail.com";
+			String fake_uuid = randomString(6);
+			boolean fake_is_hiv_positive = Math.random() < 0.5;
+			String fake_diagnosis_date = "01/01/2000";
+			boolean fake_is_on_antiretroviral_therapy = Math.random() < 0.5;
+			String fake_medication_start_date = "01/01/2000";
+			int fake_years_without_medication = (int) Math.floor(Math.random() * 10);
+			String fake_password = randomString(6);
+			String fake_country_of_residence = "UGA";
+			int fake_life_expectancy = (int) Math.floor(Math.random() * 100);
+
+			Patient patient = new Patient(fake_first_name, fake_last_name, fake_username, fake_age, fake_dob,
+					fake_email,
+					fake_uuid, fake_is_hiv_positive, fake_diagnosis_date, fake_is_on_antiretroviral_therapy,
+					fake_medication_start_date, fake_years_without_medication, fake_password, fake_country_of_residence,
+					fake_life_expectancy);
+
+			String patientString = patient.getFirstName() + "," + patient.getLastName() + "," + patient.getUsername()
+					+ "," + patient.getAge() + "," + patient.getDob() + "," + patient.get_email() + ","
+					+ patient.get_uuid() + "," + patient.is_hiv_positive() + "," + patient.get_diagnosis_date() + ","
+					+ patient.is_on_antiretroviral_therapy() + "," + patient.get_medication_start_date() + ","
+					+ patient.get_years_without_medication() + "," + patient.get_password() + ","
+					+ patient.get_country_of_residence() + "," + patient.get_life_expectancy();
+
+			executeCommand(new String[] { "script/insert2.sh", patientString, "storage/user-store.txt" });
+		}
+	}
+
+	private static String randomString(int length) {
+		String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < length; i++) {
+			result.append(characters.charAt((int) Math.floor(Math.random() * characters.length())));
+		}
+		return result.toString();
+	}
+
+	public static void exportPatientAnalytics() {
+		createPatients(500);
+		List<Patient> patients = getAllPatients();
+		patientStats(patients);
 	}
 }
