@@ -6,12 +6,13 @@ import java.io.*;
 import java.util.Arrays;
 
 public class MainController {
-
 	public static void checkStorage() {
+		printAsteriskLine(70);
 		File file = new File("storage/user-store.txt");
 		if (!file.exists()) {
 			System.out.println("Welcome to Life Prognosis App! Initializing application...");
 			String choice = userInput("Would you like to create a custom admin account? (Y/N): ");
+			printAsteriskLine(70);
 			Admin admin = null;
 			if (choice.equalsIgnoreCase("Y")) {
 				String firstName = userInput("Enter first name: ");
@@ -72,6 +73,7 @@ public class MainController {
 	}
 
 	public static Patient initiatePatientProfile() {
+		printAsteriskLine(70);
 		Patient patient = new Patient(null, null, null, 0, null, null, null, false, null, false, null, 0, null, null);
 		patient.set_email(userInput("Enter patient's email: "));
 		patient.set_uuid(generateUUID());
@@ -144,6 +146,7 @@ public class MainController {
 		// Ask user to Login or Complete Profile
 		String choice = userInput("Please choose: \n1.Login \n2.Complete Profile \n3.Quit: ");
 		if (choice.equals("1")) {
+			printAsteriskLine(70);
 			// login and continue if successful but retry if failed
 			String username = userInput("Enter username: ");
 			String password = userInput("Enter password: ");
@@ -160,10 +163,12 @@ public class MainController {
 				String adminChoice = userInput(
 						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Delete Patient Profile \n4.Export patient data \n5.Export patient analytics \n6.Edit Admin Details \n7.Logout ");
 				if (adminChoice.equals("1")) {
+					printAsteriskLine(70);
 					initiatePatientProfile();
 					System.out.println("Patient profile created successfully");
 					main(args);
 				} else if (adminChoice.equals("2")) {
+					printAsteriskLine(70);
 					String patient_uuid = userInput("Enter patient uuid: ");
 					Patient patient = getPatientDetails(patient_uuid);
 					// update patient email
@@ -173,6 +178,7 @@ public class MainController {
 					System.out.println("Patient profile updated successfully");
 					main(args);
 				} else if (adminChoice.equals("3")) {
+					printAsteriskLine(70);
 					String uuid = userInput("Enter UUID: ");
 					String line_number = executeCommand(
 							new String[] { "script/search.sh", uuid, "storage/user-store.txt" }).split(":")[0];
@@ -180,6 +186,7 @@ public class MainController {
 					System.out.println("Patient profile deleted successfully!");
 					main(args);
 				} else if (adminChoice.equals("4")) {
+					printAsteriskLine(70);
 					// export patient data
 					// TODO: remember to format the export
 					executeCommand(
@@ -187,11 +194,13 @@ public class MainController {
 					System.out.println("Patient data exported successfully!");
 					main(args);
 				} else if (adminChoice.equals("5")) {
+					printAsteriskLine(70);
 					// export patient data
 					executeCommand(new String[] { "touch", "storage/patient-analytics.csv" });
 					System.out.println("Patient data exported successfully");
 					main(args);
 				} else if (adminChoice.equals("6")) {
+					printAsteriskLine(70);
 					// edit admin details
 					String line_number = executeCommand(new String[] { "script/search.sh", "admin", "storage/user-store.txt" })
 							.split(":")[0];
@@ -208,6 +217,7 @@ public class MainController {
 					System.out.println("Admin details updated successfully");
 					main(args);
 				} else if (adminChoice.equals("7")) {
+					printAsteriskLine(70);
 					System.out.println("Admin logged out successfully");
 					main(args);
 				} else {
@@ -222,6 +232,7 @@ public class MainController {
 				String patientChoice = userInput(
 						"Please choose: \n1.View patient profile \n2.Update patient profile \n3.Delete patient profile \n4.Logout ");
 				if (patientChoice.equals("1")) {
+					printAsteriskLine(70);
 					double lifeExpectancy = lifeExpectancy(patient.get_country_of_residence(),
 							(double) patient.getAge(), patient.get_years_without_medication());
 					// output patient profile with nice formatting
@@ -239,6 +250,7 @@ public class MainController {
 					userInput("Press Enter to logout");
 					main(args);
 				} else if (patientChoice.equals("2")) {
+					printAsteriskLine(70);
 					String uuid = patient.get_uuid();
 					String[] commands = { "script/search.sh", uuid, "storage/user-store.txt" };
 					String[] userStore = executeCommand(commands).split(":");
@@ -252,9 +264,11 @@ public class MainController {
 					System.out.println("Patient profile updated successfully");
 					main(args);
 				} else if (patientChoice.equals("3")) {
+					printAsteriskLine(70);
 					System.out.println("Patient profile deleted successfully");
 					main(args);
 				} else if (patientChoice.equals("4")) {
+					printAsteriskLine(70);
 					System.out.println("Patient logged out successfully");
 					main(args);
 				} else {
@@ -289,6 +303,7 @@ public class MainController {
 			completePatientProfile(patient, line_number);
 			main(args);
 		} else if (choice.equals("3")) {
+			printAsteriskLine(70);
 			System.out.println("Goodbye");
 			System.exit(0);
 		} else {
@@ -395,7 +410,6 @@ public class MainController {
 
 		String output = "";
 		try {
-			System.out.println(Arrays.toString(commands));
 			Process process = Runtime.getRuntime().exec(commands);
 
 			// Read output from the script
@@ -415,4 +429,11 @@ public class MainController {
 
 		return output;
 	}
+
+	public static void printAsteriskLine(int length) {
+        for (int i = 0; i < length; i++) {
+            System.out.print("*");
+        }
+        System.out.println();  // Move to the next line after printing the asterisks
+    }
 }
