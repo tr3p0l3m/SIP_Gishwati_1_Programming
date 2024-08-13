@@ -11,8 +11,8 @@ import java.util.*;
 import java.util.regex.*;
 
 public class MainController {
-
 	public static void checkStorage() {
+		printAsteriskLine(70);
 		File file = new File("storage/user-store.txt");
 		if (!file.exists()) {
 			System.out.println("Welcome to Life Prognosis App! Initializing application...");
@@ -228,6 +228,7 @@ public class MainController {
 		// Ask user to Login or Complete Profile
 		String choice = userInput("Please choose: \n1.Login \n2.Complete Profile \n3.Quit: ", "number", 0, 1, 3);
 		if (choice.equals("1")) {
+			printAsteriskLine(70);
 			// login and continue if successful but retry if failed
 			String username = userInput("Enter username: ", "none", 0, 0, 0);
 			String password = passwordInput(false);
@@ -245,6 +246,7 @@ public class MainController {
 						"Please choose: \n1.Create new patient profile \n2.Update patient profile \n3.Delete Patient Profile \n4.Export patient data \n5.Export patient analytics \n6.Edit Admin Details \n7.Logout ",
 						"number", 0, 1, 7);
 				if (adminChoice.equals("1")) {
+					printAsteriskLine(70);
 					initiatePatientProfile();
 					System.out.println("Patient profile created successfully");
 					main(args);
@@ -265,17 +267,20 @@ public class MainController {
 					System.out.println("Patient profile deleted successfully!");
 					main(args);
 				} else if (adminChoice.equals("4")) {
+					printAsteriskLine(70);
 					// export patient data
 					executeCommand(
 							new String[] { "script/export.sh", "storage/user-store.txt", "storage/patient-data.csv" });
 					System.out.println("Patient data exported successfully to storage/patient-data.csv");
 					main(args);
 				} else if (adminChoice.equals("5")) {
+					printAsteriskLine(70);
 					// export patient data
 					exportPatientAnalytics();
 					System.out.println("Patient data exported successfully to storage/patient-analytics.csv");
 					main(args);
 				} else if (adminChoice.equals("6")) {
+					printAsteriskLine(70);
 					// edit admin details
 					String line_number = executeCommand(
 							new String[] { "script/search.sh", "admin", "storage/user-store.txt" })
@@ -284,6 +289,7 @@ public class MainController {
 					updateAdminProfile(admin, safeParseInt(line_number));
 					main(args);
 				} else if (adminChoice.equals("7")) {
+					printAsteriskLine(70);
 					System.out.println("Admin logged out successfully");
 					main(args);
 				} else {
@@ -299,6 +305,7 @@ public class MainController {
 						"Please choose: \n1.View patient profile \n2.Update patient profile \n3.Delete patient profile \n4.Logout ",
 						"number", 0, 1, 4);
 				if (patientChoice.equals("1")) {
+					printAsteriskLine(70);
 					double lifeExpectancy = lifeExpectancy(patient.get_country_of_residence(),
 							(double) patient.getAge(), patient.get_years_without_medication());
 					// output patient profile with nice formatting
@@ -308,6 +315,7 @@ public class MainController {
 					userInput("Press Enter to logout", "none", 0, 0, 0);
 					main(args);
 				} else if (patientChoice.equals("2")) {
+					printAsteriskLine(70);
 					String uuid = patient.get_uuid();
 					String[] commands = { "script/search.sh", uuid, "storage/user-store.txt" };
 					String[] userStore = executeCommand(commands).split(":");
@@ -321,9 +329,11 @@ public class MainController {
 					System.out.println("Patient profile updated successfully");
 					main(args);
 				} else if (patientChoice.equals("3")) {
+					printAsteriskLine(70);
 					System.out.println("Patient profile deleted successfully");
 					main(args);
 				} else if (patientChoice.equals("4")) {
+					printAsteriskLine(70);
 					System.out.println("Patient logged out successfully");
 					main(args);
 				} else {
@@ -358,6 +368,7 @@ public class MainController {
 			completePatientProfile(patient, line_number);
 			main(args);
 		} else if (choice.equals("3")) {
+			printAsteriskLine(70);
 			System.out.println("Goodbye");
 			System.exit(0);
 		} else {
@@ -868,5 +879,12 @@ public class MainController {
 		// Notify the user that the profile has been completed
 		System.out.println("Admin Profile completed successfully. Please log in with your credentials.");
 		return admin;
+	}
+
+	public static void printAsteriskLine(int length) {
+        for (int i = 0; i < length; i++) {
+            System.out.print("*");
+        }
+		System.out.println("\n");
 	}
 }
