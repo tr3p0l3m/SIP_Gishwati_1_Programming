@@ -12,10 +12,11 @@ public class Patient extends User {
 	int years_without_medication;
 	String password;
 	String country_of_residence;
+	int life_expectancy;
 
 	public Patient(String first_name, String last_name, String username,
 			int age, String dob, String email, String uuid, boolean is_hiv_positive, String diagnosis_date,
-			boolean is_on_antiretroviral_therapy, String medication_start_date, int years_without_medication, String password, String country_of_residence) {
+			boolean is_on_antiretroviral_therapy, String medication_start_date, int years_without_medication, String password, String country_of_residence, int life_expectancy) {
 		super(first_name, last_name, username, age, dob, role.PATIENT);
 		this.email = email;
 		this.uuid = uuid;
@@ -26,6 +27,7 @@ public class Patient extends User {
 		this.years_without_medication = years_without_medication;
 		this.password = password;
 		this.country_of_residence = country_of_residence;
+		this.life_expectancy = life_expectancy;
 	}
 
 	public String get_email() {
@@ -100,13 +102,27 @@ public class Patient extends User {
 		this.country_of_residence = country_of_residence;
 	}
 
+	public int get_life_expectancy() {
+		return life_expectancy;
+	}
+
+	public void set_life_expectancy(int life_expectancy) {
+		this.life_expectancy = life_expectancy;
+	}
+
 	@Override
 	public String toString() {
-		return "Patient [is_hiv_positive=" + is_hiv_positive + ", diagnosis_date=" + diagnosis_date
-				+ ", is_on_antiretroviral_therapy=" + is_on_antiretroviral_therapy + ", medication_start_date="
-				+ medication_start_date + ", years_without_medication=" + years_without_medication + ", first_name="
-				+ first_name + ", last_name=" + last_name + ", username=" + username + ", age=" + age + ", dob=" + dob
-				+ "]";
+		return this.first_name + "'s Profile \n" + "First Name: "
+				+ first_name
+				+ "\nLast Name: " + this.last_name + "\nUsername: " + this.username
+				+ "\nAge: " + this.age + "\nDate of Birth: " + this.dob + "\nEmail: "
+				+ this.email + "\nUUID: " + this.uuid + "\nHIV Positive: "
+				+ this.is_hiv_positive + "\nDiagnosis Date: " + this.diagnosis_date
+				+ "\nOn Antiretroviral Therapy: " + this.is_on_antiretroviral_therapy
+				+ "\nMedication Start Date: " + this.medication_start_date
+				+ "\nYears Without Medication: " + this.years_without_medication
+				+ "\nCountry of Residence: " + this.country_of_residence
+				+ "\nLife Expectancy: " + this.life_expectancy;
 	}
 
 }
