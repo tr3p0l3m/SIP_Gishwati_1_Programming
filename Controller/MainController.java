@@ -158,68 +158,72 @@ public class MainController {
 	}
 
 	public static Patient completePatientProfile(Patient patient, int line_number) {
-	// Prompt for personal details only
-	patient.setFirstName(userInput("Enter first name: ", "none", 30, 0, 0));
-	patient.setLastName(userInput("Enter last name: ", "none", 30, 0, 0));
-	patient.setUsername(userInput("Enter username: ", "username", 30, 0, 0));
-	patient.setDob(userInput("Enter date of birth (DD-MM-YYYY): ", "date", 0, 0, 0));
-	patient.setAge(ageCalculator(patient.getDob()));
-	Country country = getCountryDetails(userInput("Enter country of residence: ", "none", 0, 0, 0));
-	patient.set_country_of_residence(country.get_code());
-	patient.set_password(hashUserPassword(passwordInput(true))); // Prompt for the password
+		// Prompt for personal details only
+		patient.setFirstName(userInput("Enter first name: ", "none", 30, 0, 0));
+		patient.setLastName(userInput("Enter last name: ", "none", 30, 0, 0));
+		patient.setUsername(userInput("Enter username: ", "username", 30, 0, 0));
+		patient.setDob(userInput("Enter date of birth (DD-MM-YYYY): ", "date", 0, 0, 0));
+		patient.setAge(ageCalculator(patient.getDob()));
+		Country country = getCountryDetails(userInput("Enter country of residence: ", "none", 0, 0, 0));
+		patient.set_country_of_residence(country.get_code());
+		patient.set_password(hashUserPassword(passwordInput(true))); // Prompt for the password
 
-	// Tell patient that the next steps are optional and can be completed later. Ask if they want to continue
-	String optional = userInput("The next steps are optional and can be completed later. Do you want to continue? (Y/N): ", "none", 0, 0, 0);
-	if (optional.equalsIgnoreCase("Y")) {
-		// Prompt for medical details with multiple choice
-		patient.set_hiv_positive(askYesNoQuestion("Are you HIV positive?"));
-		if (patient.is_hiv_positive()) {
-			patient.set_diagnosis_date(userInput("Enter diagnosis date (DD-MM-YYYY): ", "date", 0, 0, 0));
-			patient.set_on_antiretroviral_therapy(askYesNoQuestion("Are you on antiretroviral therapy?"));
-			if (patient.is_on_antiretroviral_therapy()) {
-				patient.set_medication_start_date(userInput("Enter medication start date (DD-MM-YYYY): ", "date", 0, 0, 0));
-				patient.set_years_without_medication(yearsWithoutMedication(patient.get_diagnosis_date(), patient.get_medication_start_date()));
+		// Tell patient that the next steps are optional and can be completed later. Ask
+		// if they want to continue
+		String optional = userInput(
+				"The next steps are optional and can be completed later. Do you want to continue? (Y/N): ", "none", 0,
+				0, 0);
+		if (optional.equalsIgnoreCase("Y")) {
+			// Prompt for medical details with multiple choice
+			patient.set_hiv_positive(askYesNoQuestion("Are you HIV positive?"));
+			if (patient.is_hiv_positive()) {
+				patient.set_diagnosis_date(userInput("Enter diagnosis date (DD-MM-YYYY): ", "date", 0, 0, 0));
+				patient.set_on_antiretroviral_therapy(askYesNoQuestion("Are you on antiretroviral therapy?"));
+				if (patient.is_on_antiretroviral_therapy()) {
+					patient.set_medication_start_date(
+							userInput("Enter medication start date (DD-MM-YYYY): ", "date", 0, 0, 0));
+					patient.set_years_without_medication(
+							yearsWithoutMedication(patient.get_diagnosis_date(), patient.get_medication_start_date()));
+				} else {
+					patient.set_years_without_medication(0);
+				}
+			}
+		}
+
+		// TODO: confirm password
+
+		// Construct the new line with updated details
+		String updatedLine = patient.getFirstName() + "," + patient.getLastName() + "," + patient.getUsername() + ","
+				+ patient.getAge() + "," + patient.getDob() + "," + patient.get_email() + "," + patient.get_uuid() + ","
+				+ patient.is_hiv_positive() + "," + patient.get_diagnosis_date() + ","
+				+ patient.is_on_antiretroviral_therapy() + ","
+				+ patient.get_medication_start_date() + "," + patient.get_years_without_medication() + ","
+				+ patient.get_password() + "," + patient.get_country_of_residence() + ","
+				+ lifeExpectancy(patient.get_country_of_residence(), patient.getAge(),
+						patient.get_years_without_medication());
+
+		updatedLine = updatedLine.trim();
+
+		// Update the user's line in the user-store.txt file
+		executeCommand(new String[] { "script/edit.sh", Integer.toString(line_number), updatedLine });
+
+		// Notify the user that the profile has been completed
+		System.out.println("Profile completed successfully. Please log in with your credentials.");
+		return patient;
+	}
+
+	private static boolean askYesNoQuestion(String question) {
+		while (true) {
+			String input = userInput(question + "\n1. Yes\n2. No\nChoose an option (1 or 2): ", "none", 0, 0, 0);
+			if (input.equals("1")) {
+				return true;
+			} else if (input.equals("2")) {
+				return false;
 			} else {
-				patient.set_years_without_medication(0);
+				System.out.println("Invalid input. Please enter 1 for Yes or 2 for No.");
 			}
 		}
 	}
-
-	// TODO: confirm password
-
-	// Construct the new line with updated details
-	String updatedLine = patient.getFirstName() + "," + patient.getLastName() + "," + patient.getUsername() + ","
-			+ patient.getAge() + "," + patient.getDob() + "," + patient.get_email() + "," + patient.get_uuid() + ","
-			+ patient.is_hiv_positive() + "," + patient.get_diagnosis_date() + ","
-			+ patient.is_on_antiretroviral_therapy() + ","
-			+ patient.get_medication_start_date() + "," + patient.get_years_without_medication() + ","
-			+ patient.get_password() + "," + patient.get_country_of_residence() + ","
-			+ lifeExpectancy(patient.get_country_of_residence(), patient.getAge(),
-					patient.get_years_without_medication());
-
-	updatedLine = updatedLine.replace("/", "-");
-
-	// Update the user's line in the user-store.txt file
-	executeCommand(new String[] { "script/edit.sh", Integer.toString(line_number), updatedLine });
-
-	// Notify the user that the profile has been completed
-	System.out.println("Profile completed successfully. Please log in with your credentials.");
-	return patient;
-}
-
-private static boolean askYesNoQuestion(String question) {
-	while (true) {
-		String input = userInput(question + "\n1. Yes\n2. No\nChoose an option (1 or 2): ", "none", 0, 0, 0);
-		if (input.equals("1")) {
-			return true;
-		} else if (input.equals("2")) {
-			return false;
-		} else {
-			System.out.println("Invalid input. Please enter 1 for Yes or 2 for No.");
-		}
-	}
-}
-
 
 	public static void main(String[] args) {
 		checkStorage();
@@ -333,7 +337,7 @@ private static boolean askYesNoQuestion(String question) {
 						main(args);
 					}
 					int line_number = Integer.parseInt(userStore[0]);
-					completePatientProfile(patient, line_number);
+					updatePatientProfile(patient, line_number);
 					System.out.println("Patient profile updated successfully");
 					main(args);
 				} else if (patientChoice.equals("3")) {
@@ -391,7 +395,6 @@ private static boolean askYesNoQuestion(String question) {
 		if (username.equals("admin")) {
 			System.out.println("Admin login commenced");
 			Admin admin = getAdminDetails(username);
-			System.out.println(admin.getPassword().trim());
 			// Admin login
 			if (admin.getPassword().trim().equals(hashUserPassword(password).trim())) {
 				System.out.println("Admin login successful");
@@ -764,6 +767,82 @@ private static boolean askYesNoQuestion(String question) {
 		createPatients(500);
 		List<Patient> patients = getAllPatients();
 		patientStats(patients);
+	}
+
+	public static Patient updatePatientProfile(Patient patient, int line_number) {
+
+		System.out.println("Choose the field you want to update: ");
+		System.out.println(
+				"1. First Name \n2. Last Name \n3. Username \n4. Date of Birth \n5. Country of Residence \n6. Password \n7.HIV record \n8. Exit");
+		String choice = "";
+
+		while (true) {
+			choice = userInput("Choose an option (1-8): ", "number", 0, 1, 8);
+			if (choice.equals("8")) {
+				break;
+			}
+			switch (choice) {
+				case "1":
+					patient.setFirstName(userInput("Enter first name: ", "none", 30, 0, 0));
+					break;
+				case "2":
+					patient.setLastName(userInput("Enter last name: ", "none", 30, 0, 0));
+					break;
+				case "3":
+					patient.setUsername(userInput("Enter username: ", "username", 30, 0, 0));
+					break;
+				case "4":
+					patient.setDob(userInput("Enter date of birth (DD-MM-YYYY): ", "date", 0, 0, 0));
+					patient.setAge(ageCalculator(patient.getDob()));
+					break;
+				case "5":
+					Country country = getCountryDetails(userInput("Enter country of residence: ", "none", 0, 0, 0));
+					patient.set_country_of_residence(country.get_code());
+					break;
+				case "6":
+					patient.set_password(hashUserPassword(passwordInput(true)));
+					break;
+				case "7":
+					patient.set_hiv_positive(askYesNoQuestion("Are you HIV positive?"));
+					if (patient.is_hiv_positive()) {
+						patient.set_diagnosis_date(userInput("Enter diagnosis date (DD-MM-YYYY): ", "date", 0, 0, 0));
+						patient.set_on_antiretroviral_therapy(askYesNoQuestion("Are you on antiretroviral therapy?"));
+						if (patient.is_on_antiretroviral_therapy()) {
+							patient.set_medication_start_date(
+									userInput("Enter medication start date (DD-MM-YYYY): ", "date", 0, 0, 0));
+							patient.set_years_without_medication(
+									yearsWithoutMedication(patient.get_diagnosis_date(),
+											patient.get_medication_start_date()));
+						} else {
+							patient.set_years_without_medication(0);
+						}
+					}
+					break;
+				default:
+					break;
+			}
+		}
+		
+		// TODO: confirm password
+
+		// Construct the new line with updated details
+		String updatedLine = patient.getFirstName() + "," + patient.getLastName() + "," + patient.getUsername() + ","
+				+ patient.getAge() + "," + patient.getDob() + "," + patient.get_email() + "," + patient.get_uuid() + ","
+				+ patient.is_hiv_positive() + "," + patient.get_diagnosis_date() + ","
+				+ patient.is_on_antiretroviral_therapy() + ","
+				+ patient.get_medication_start_date() + "," + patient.get_years_without_medication() + ","
+				+ patient.get_password() + "," + patient.get_country_of_residence() + ","
+				+ lifeExpectancy(patient.get_country_of_residence(), patient.getAge(),
+						patient.get_years_without_medication());
+
+		updatedLine = updatedLine.trim();
+
+		// Update the user's line in the user-store.txt file
+		executeCommand(new String[] { "script/edit.sh", Integer.toString(line_number), updatedLine });
+
+		// Notify the user that the profile has been completed
+		System.out.println("Profile completed successfully. Please log in with your credentials.");
+		return patient;
 	}
 
 	public static void printAsteriskLine(int length) {
